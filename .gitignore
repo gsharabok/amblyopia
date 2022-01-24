@@ -1,0 +1,6 @@
+data/results/*
+data/video/*
+data/xml
+
+__pycache__
+venv

@@ -1,0 +1,26 @@
+Pupil Detection and Tracking
+
+To run:
+python main.py
+
+Parameters:
+Path to a video file: --filepath data/video/video.mp4
+Define threshold for pupil tracking: --pupilthresh 100
+Use live camera: --camera
+
+--
+
+For ball tracking:
+Program relies on the color of the ball
+To find the proper settings, run color_picker.py on a screenshot from the video
+Then put the measure min and max into ball_tracking.py
+
+For distance measurement:
+Take a reference photo: ref_ball.jpg
+And put the measured distance from camera to object into distance.py
+
+--
+
+Tests:
+For g_train2.mp4 use ref_ball.JPG for reference and run:
+python main.py --filepath data\video\g_train2.mp4 --pupilthresh 40
