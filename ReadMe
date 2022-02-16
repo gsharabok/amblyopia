@@ -24,3 +24,7 @@ And put the measured distance from camera to object into distance.py
 Tests:
 For g_train2.mp4 use ref_ball.JPG for reference and run:
 python main.py --filepath data\video\g_train2.mp4 --pupilthresh 40
+
+---- 
+TODO:
+in fit_circle only feed the eye part to make sure the circle fits into the eye -> then just use the circle as the pupil

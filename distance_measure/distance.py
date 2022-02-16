@@ -28,10 +28,13 @@ face_detector = models.face_cascade
 
 
 def get_distance_face(frame, faces):
+    if len(faces) == 0: return 0
+    
     faces = faces[0]
     _,_,w,_ = faces
     face_width_in_frame = w
     # finding the distance by calling function Distance
+    Distance = 0
     if face_width_in_frame != 0:
         Distance = distance_finder(focal_length_found, KNOWN_WIDTH_FACE, face_width_in_frame)
         # Drwaing Text on the screen
@@ -39,21 +42,23 @@ def get_distance_face(frame, faces):
             frame, f"Face Distance = {round(Distance,2)} CM", (30, 30), fonts, 0.6, (WHITE), 1
         )
     # cv2.imshow("frame", frame)    
-    return faces
+    return Distance
 
 def get_distance_ball(frame, ball):
+    if len(ball) == 0: return 0
 
     ((x, y), radius) = ball
     ball_width_in_frame = radius*2
 
+    Distance = 0
     if ball_width_in_frame != 0:
-        Distance = distance_finder(focal_length_found, KNOWN_WIDTH_BALL, ball_width_in_frame)
+        Distance = distance_finder(focal_length_found, KNOWN_WIDTH_BALL, ball_width_in_frame, 0.8)
 
         cv2.putText(
             frame, f"Ball Distance = {round(Distance,2)} CM", (30, 50), fonts, 0.6, (WHITE), 1
         )
 
-    return ball
+    return Distance
 
 # focal length finder function
 def focal_length(measured_distance, real_width, width_in_rf_image):
@@ -70,7 +75,7 @@ def focal_length(measured_distance, real_width, width_in_rf_image):
 
 
 # distance estimation function
-def distance_finder(focal_length, real_face_width, face_width_in_frame):
+def distance_finder(focal_length, real_face_width, face_width_in_frame, angle_adjustment=1):
     """
     This Function simply Estimates the distance between object and camera using arguments(focal_length, Actual_object_width, Object_width_in_the_image)
     :param1 focal_length(float): return by the focal_length_Finder function
@@ -79,7 +84,7 @@ def distance_finder(focal_length, real_face_width, face_width_in_frame):
     :param3 object_Width_Frame(int): width of object in the image(frame in our case, using Video feed)
     :return Distance(float) : distance Estimated
     """
-    distance = (real_face_width * focal_length) / face_width_in_frame
+    distance = (real_face_width * focal_length * angle_adjustment) / face_width_in_frame
     return distance
 
 
@@ -106,7 +111,7 @@ def face_data(image):
 ref_image = cv2.imread("data/video/ref_ball.JPG")
 ref_image_face_width = face_data(ref_image)
 focal_length_found = focal_length(KNOWN_DISTANCE_FACE, KNOWN_WIDTH_FACE, ref_image_face_width)
-print(focal_length_found)
+# print(focal_length_found)
 
 ball = track_ball(ref_image)
 ((x, y), radius) = ball

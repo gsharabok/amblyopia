@@ -24,7 +24,7 @@ def detect_eyes(
         """
         Detect eyes, optionally cut the eyebrows out
         """
-        coords = models.eye_cascade.detectMultiScale(face_img, 1.3, 5)
+        coords = models.eye_cascade.detectMultiScale(face_img, 1.3, 5) # scaleFactor, minNeighbors
 
         left_eye = right_eye = None
         left_coord = right_coord = None

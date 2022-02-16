@@ -7,6 +7,7 @@ from skimage import measure
 import argparse
 import datetime
 import time
+import matplotlib.pyplot as plt
 
 from detection.mask import create_mask
 from detection.face import detect_face, get_largest_frame
@@ -66,6 +67,20 @@ previous_right_blob_area = 1
 previous_left_keypoints = None
 previous_right_keypoints = None
 
+previous_left_pupil_coords = None
+previous_left_pupil_direction = None
+previous_right_pupil_coords = None
+previous_right_pupil_direction = None
+previous_ball_to_face_distance = None
+
+direction_change_count = 0
+frame_count = 0
+direction_change_frames = 10
+direction_change_thresh = 6
+
+ball_distance_array = []
+left_eye_distance_center_array = []
+right_eye_distance_center_array = []
 
 # Read video
 cap = cv2.VideoCapture(filepath)
@@ -86,6 +101,32 @@ capWriter = cv2.VideoWriter(capWriter_filename,
                          10, size)
 
 # init_get_distance()
+
+def find_pupil_direction(pupil_coords, previous_pupil_coords):
+    if previous_pupil_coords is None:
+        return None
+    if pupil_coords is None:
+        return None
+
+    x_diff = pupil_coords[0] - previous_pupil_coords[0]
+    # y_diff = pupil_coords[1] - previous_pupil_coords[1]
+
+    if x_diff > 0:
+        return "right"
+    elif x_diff < 0:
+        return "left"
+    else:
+        return None
+
+def is_direction_change(direction, previous_direction):
+    if previous_direction is None:
+        return False
+    if direction is None:
+        return False
+    if direction != previous_direction:
+        return True
+    return False
+
 
 while 1:
     # Get individual frame
@@ -119,8 +160,12 @@ while 1:
     else:
         # Draw rectangle on face
         for (x, y, w, h) in faces:
-            get_distance_face(img, faces)
-            get_distance_ball(img, ball)
+            face_distance = get_distance_face(img, faces)
+            ball_distance = get_distance_ball(img, ball)
+            ball_to_face_distance = face_distance-ball_distance
+
+            ball_distance_array.append(ball_to_face_distance)
+
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 255), 2)
             roi_gray = gray[y:y + h, x:x + w]
             roi_color = img[y:y + h, x:x + w]
@@ -128,27 +173,72 @@ while 1:
             fr = gray[y : y + h, x : x + w]
             left_eye, right_eye, left_coord, right_coord = detect_eyes(fr)
 
+            frame_count += 1
+            if frame_count >= direction_change_frames:
+                print(direction_change_count)
+                if direction_change_count >= direction_change_thresh:
+                    print("WIGGLE")
+                direction_change_count = 0
+                frame_count = 0
+            right_direction_change = left_direction_change = False
+
             if left_eye is not None:
+                # Eye rectangle coordinates x0, y0 = top left corner, x1, y1 = bottom right corner 
                 x0 = x+left_coord[0]
                 x1 = x+left_coord[0] + left_coord[2]
                 y0 = y+left_coord[1]
                 y1 = y+left_coord[1] + left_coord[3]
-                
+
+                # Left eye rectangle width and height
+                w = left_coord[2]
+                h = left_coord[3]
+
                 cv2.rectangle(img, (x0, y0), (x1, y1), (255, 255, 255), 2)
                 crop_left = img[y0:y1, x0:x1]
                 
-                pupil_detect(crop_left, pupil_threshold)
+                pupil_coords = pupil_detect(crop_left, pupil_threshold)
+
+                direction = find_pupil_direction(pupil_coords, previous_left_pupil_coords)
+                left_direction_change = is_direction_change(direction, previous_left_pupil_direction)
+
+                previous_left_pupil_coords = pupil_coords
+                previous_left_pupil_direction = direction
+
+                left_eye_distance_center_array.append(w - (pupil_coords[0] + pupil_coords[2]/2))
 
             if right_eye is not None:
+                # Eye rectangle coordinates x0, y0 = top left corner, x1, y1 = bottom right corner
                 x0 = x+right_coord[0]
                 x1 = x+right_coord[0] + right_coord[2]
                 y0 = y+right_coord[1]
                 y1 = y+right_coord[1] + right_coord[3]
 
+                # Right eye rectangle width and height
+                w = right_coord[2]
+                h = right_coord[3]
+
                 cv2.rectangle(img, (x0, y0), (x1, y1), (255, 255, 255), 2)
                 crop_right = img[y0:y1, x0:x1]
                 
-                pupil_detect(crop_right, pupil_threshold)
+                pupil_coords = pupil_detect(crop_right, pupil_threshold)
+
+                direction = find_pupil_direction(pupil_coords, previous_right_pupil_coords)
+                right_direction_change = is_direction_change(direction, previous_right_pupil_direction)
+
+                previous_right_pupil_coords = pupil_coords
+                previous_right_pupil_direction = direction
+
+                right_eye_distance_center_array.append(pupil_coords[0]+pupil_coords[2]/2)
+
+            if previous_ball_to_face_distance is None or ball_to_face_distance is None:
+                ball_closer = False
+            else:
+                ball_closer = ball_to_face_distance < previous_ball_to_face_distance
+            
+            if left_direction_change and right_direction_change and ball_closer:
+                direction_change_count += 1
+
+            previous_ball_to_face_distance = ball_to_face_distance
 
             # Detect lips counters
             mouth_rects = models.mouth_cascade.detectMultiScale(gray, 1.5, 5)
@@ -182,3 +272,21 @@ while 1:
 cap.release()
 capWriter.release()
 cv2.destroyAllWindows()
+
+def plot_data():
+    indx = [x for x in range(0, len(ball_distance_array))]
+    plt.scatter(indx, ball_distance_array, color='red', label='Ball Distance')
+    plt.savefig('data/results/plots/ball_distance.png', bbox_inches='tight')
+    plt.close()
+
+    indx = [x for x in range(0, len(left_eye_distance_center_array))]
+    plt.scatter(indx, left_eye_distance_center_array, color='blue', label='Left Eye Distance')
+    plt.savefig('data/results/plots/left_eye_distance.png', bbox_inches='tight')
+    plt.close()
+
+    indx = [x for x in range(0, len(right_eye_distance_center_array))]
+    plt.scatter(indx, right_eye_distance_center_array, color='green', label='Right Eye Distance')
+    plt.savefig('data/results/plots/right_eye_distance.png', bbox_inches='tight')
+    plt.close()
+
+plot_data()
