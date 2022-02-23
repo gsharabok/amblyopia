@@ -25,6 +25,17 @@ Tests:
 For g_train2.mp4 use ref_ball.JPG for reference and run:
 python main.py --filepath data\video\g_train2.mp4 --pupilthresh 40
 
+
+Serve over the Internet:
+python frontend_main.py
+ngrok http 5000
+(when on mobile make sure to add https://)
+
 ---- 
 TODO:
 in fit_circle only feed the eye part to make sure the circle fits into the eye -> then just use the circle as the pupil
+When video feed ends fix so it doesnt crush:
+    Traceback (most recent call last):
+    File "main.py", line 137, in <module>
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.error: OpenCV(4.5.4) D:\a\opencv-python\opencv-python\opencv\modules\imgproc\src\color.cpp:182: error: (-215:Assertion failed) !_src.empty() in function 'cv::cvtColor'

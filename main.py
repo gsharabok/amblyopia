@@ -15,8 +15,12 @@ from detection.eye import detect_eyes,_cut_eyebrows
 from detection.blob import blob_track
 from detection.pupil import pupil_detect
 from ball.ball_tracking import *
+from face_landmarks.eye_corners import get_eye_corners
 from distance_measure.distance import get_distance_face, get_distance_ball
 import models
+
+def test():
+    print("test")
 
 
 # Command Line arguments
@@ -165,6 +169,8 @@ while 1:
             ball_to_face_distance = face_distance-ball_distance
 
             ball_distance_array.append(ball_to_face_distance)
+
+            left_eye_corner, right_eye_corner = get_eye_corners(img, gray, (x, y, w, h))
 
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 255, 255), 2)
             roi_gray = gray[y:y + h, x:x + w]

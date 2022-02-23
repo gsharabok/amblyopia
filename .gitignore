@@ -4,3 +4,7 @@ data/xml
 
 __pycache__
 venv
+
+*.dat
+
+*.png
