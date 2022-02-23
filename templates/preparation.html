@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<script>
+//  philipwalton.com/articles/the-google-analytics-setup-i-use-on-every-site-i-build
+window.ga = window.ga || function() {
+  (ga.q = ga.q || []).push(arguments);
+};
+ga('create', 'UA-33848682-1', 'auto');
+ga('set', 'transport', 'beacon');
+ga('send', 'pageview');
+</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+{{ JSGlue.include() }}
+
+<meta charset="utf-8">
+<meta name="description" content="Simplest possible examples of HTML, CSS and JavaScript.">
+<meta name="author" content="//samdutton.com">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta itemprop="name" content="simpl.info: simplest possible examples of HTML, CSS and JavaScript">
+<meta itemprop="image" content="/images/icons/icon192.png">
+<meta id="theme-color" name="theme-color" content="#fff">
+
+<!-- <link rel="icon" href="/images/icons/icon192.png"> -->
+
+<base target="_blank">
+
+
+<title>mediaDevices.enumerateDevices()</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css')}}">
+
+<style>
+h1 {
+  margin: 0 0 24px 0;
+}
+select {
+  width: 150px;
+}
+video {
+  margin: 10px 0 0 0;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="container">
+
+  <div class="select">
+    <label for="audioSource">Audio source: </label><select id="audioSource"></select>
+  </div>
+
+  <div class="select">
+    <label for="videoSource">Video source: </label><select id="videoSource"></select>
+  </div>
+
+  <video autoplay muted playsinline></video>
+
+  <script async src="{{ url_for('static', filename='js/main.js')}}"></script>
+
+  <a href=”/rundetection><input type=”button” value=”call_flask_funtion”></a> 
+
+</div>
+
+<script src="{{ url_for('static', filename='js/ga.js')}}"></script>
+
+</body>
+</html>
