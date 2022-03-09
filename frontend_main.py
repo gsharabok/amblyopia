@@ -19,6 +19,10 @@ def tutorial():
 def preparation():
     return render_template('preparation.html')
 
+@app.route('/pc1')
+def pc1():
+    return render_template('pc1/index.html')
+
 @app.route('/rundetection') 
 def run_detection(): 
     print("Running test...")

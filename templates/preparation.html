@@ -61,7 +61,20 @@ video {
 
   <video autoplay muted playsinline></video>
 
-  <script async src="{{ url_for('static', filename='js/main.js')}}"></script>
+  <script async>
+    const constraints = {
+  video: true,
+};
+
+const video = document.querySelector("video");
+
+navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+  video.srcObject = stream;
+  console.log(stream);
+});
+  </script>
+
+  <!-- <script async src="{{ url_for('static', filename='js/main.js')}}"></script> -->
 
   <a href=”/rundetection><input type=”button” value=”call_flask_funtion”></a> 
 

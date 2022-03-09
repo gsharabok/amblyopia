@@ -120,22 +120,21 @@ def pupil_detect(eyeArr, bw_threshold):
     # cv2.imshow("Eye1", gray_eye)
 
     threshold = cv2.threshold(gray_eye, bw_threshold, 255, cv2.THRESH_BINARY_INV)[1]
-    cv2.imshow("Threshold1", threshold)
+    # cv2.imshow("Threshold1", threshold)
 
-    ### Thresh 
-    gray = cv2.cvtColor(eyeArr[4:rows - 4, 4:cols - 4], cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-    blurred = cv2.medianBlur(blurred, 3)
-    # cv2.imshow("Eye", blurred)
+    ### Thresh (working part)
+    # gray = cv2.cvtColor(eyeArr[4:rows - 4, 4:cols - 4], cv2.COLOR_BGR2GRAY)
+    # blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    # blurred = cv2.medianBlur(blurred, 3)
     
-    (T, threshInv) = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    cv2.imshow("Threshold", threshInv)
-    print("[INFO] otsu's thresholding value: {}".format(T))
+    # (T, threshInv) = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    # cv2.imshow("Threshold", threshInv)
+    # print("[INFO] otsu's thresholding value: {}".format(T))
 
 
     # fit_circle(threshInv)
     # img = circlee(eyeArr[4:rows - 4, 4:cols - 4])
-    #####
+    ##### (ends here)
 
     # th2 = cv2.threshold(gray_eye,0,255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 

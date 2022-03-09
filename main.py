@@ -8,6 +8,9 @@ import argparse
 import datetime
 import time
 import matplotlib.pyplot as plt
+import urllib
+import requests
+import imutils
 
 from detection.mask import create_mask
 from detection.face import detect_face, get_largest_frame
@@ -19,15 +22,12 @@ from face_landmarks.eye_corners import get_eye_corners
 from distance_measure.distance import get_distance_face, get_distance_ball
 import models
 
-def test():
-    print("test")
-
-
 # Command Line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--filepath", help="path to video file")
 parser.add_argument("--pupilthresh", help="pupil threshold", type=int)
 parser.add_argument("--camera", help="use live video feed", action="store_true")
+parser.add_argument("--remote", help="stream camera")
 
 args = parser.parse_args()
 
@@ -36,6 +36,8 @@ if args.filepath:
     filepath = args.filepath
 if args.camera:
     filepath = 0
+if args.remote:
+    filepath = args.remote
 
 
 # Adjust threshold value in range 80 to 105 based on your light.
@@ -133,7 +135,6 @@ def is_direction_change(direction, previous_direction):
 
 
 while 1:
-    # Get individual frame
     ret, img = cap.read()
     img = cv2.flip(img,1)
 
@@ -204,13 +205,17 @@ while 1:
                 
                 pupil_coords = pupil_detect(crop_left, pupil_threshold)
 
+                left_corner_x, left_corner_y = left_eye_corner
+                left_corner_x = left_corner_x - x0
+                left_corner_y = left_corner_y - y0
+
                 direction = find_pupil_direction(pupil_coords, previous_left_pupil_coords)
                 left_direction_change = is_direction_change(direction, previous_left_pupil_direction)
 
                 previous_left_pupil_coords = pupil_coords
                 previous_left_pupil_direction = direction
 
-                left_eye_distance_center_array.append(w - (pupil_coords[0] + pupil_coords[2]/2))
+                left_eye_distance_center_array.append(left_corner_x - (pupil_coords[0] + pupil_coords[2]/2))
 
             if right_eye is not None:
                 # Eye rectangle coordinates x0, y0 = top left corner, x1, y1 = bottom right corner
@@ -228,13 +233,17 @@ while 1:
                 
                 pupil_coords = pupil_detect(crop_right, pupil_threshold)
 
+                right_corner_x, right_corner_y = right_eye_corner
+                right_corner_x = right_corner_x - x0
+                right_corner_y = right_corner_y - y0
+
                 direction = find_pupil_direction(pupil_coords, previous_right_pupil_coords)
                 right_direction_change = is_direction_change(direction, previous_right_pupil_direction)
 
                 previous_right_pupil_coords = pupil_coords
                 previous_right_pupil_direction = direction
 
-                right_eye_distance_center_array.append(pupil_coords[0]+pupil_coords[2]/2)
+                right_eye_distance_center_array.append((pupil_coords[0]+pupil_coords[2]/2)-right_corner_x)
 
             if previous_ball_to_face_distance is None or ball_to_face_distance is None:
                 ball_closer = False
