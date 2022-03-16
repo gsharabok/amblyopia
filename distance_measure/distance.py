@@ -1,15 +1,25 @@
 import cv2
 from ball.ball_tracking import track_ball
+from detection.face import get_largest_frame
 import models
 
 # Small string 34 cm
 # Face width 14.3 cm
 # Ball width 1.6 cm
+# KNOWN_DISTANCE_FACE = 34  # centimeter
+# KNOWN_WIDTH_FACE = 14.3  # centimeter
+
+# KNOWN_DISTANCE_BALL = 17  # centimeter
+# KNOWN_WIDTH_BALL = 1.6  # centimeter
+
+
+# Testing distances
 KNOWN_DISTANCE_FACE = 34  # centimeter
 KNOWN_WIDTH_FACE = 14.3  # centimeter
 
-KNOWN_DISTANCE_BALL = 17  # centimeter
+KNOWN_DISTANCE_BALL = 12  # centimeter
 KNOWN_WIDTH_BALL = 1.6  # centimeter
+
 
 # variables
 # distance from camera to object(face) measured
@@ -52,7 +62,7 @@ def get_distance_ball(frame, ball):
 
     Distance = 0
     if ball_width_in_frame != 0:
-        Distance = distance_finder(focal_length_found, KNOWN_WIDTH_BALL, ball_width_in_frame, 0.8)
+        Distance = distance_finder(focal_ball_length_found, KNOWN_WIDTH_BALL, ball_width_in_frame, 0.8)
 
         cv2.putText(
             frame, f"Ball Distance = {round(Distance,2)} CM", (30, 50), fonts, 0.6, (WHITE), 1
@@ -98,7 +108,9 @@ def face_data(image):
 
     face_width = 0
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    faces = face_detector.detectMultiScale(gray_image, 1.3, 5)
+    faces = models.face_cascade.detectMultiScale(gray_image, 1.1, 4)
+    faces = get_largest_frame(faces)
+    # faces = face_detector.detectMultiScale(gray_image, 1.3, 5)
     for (x, y, h, w) in faces:
         cv2.rectangle(image, (x, y), (x + w, y + h), WHITE, 1)
         face_width = w
@@ -108,7 +120,8 @@ def face_data(image):
 
 # TODO: expects a face and a ball to be present for calibration
 
-ref_image = cv2.imread("data/video/ref_ball.JPG")
+ref_image = cv2.imread("data/video/reference_color.jpg")
+ref_image = cv2.flip(ref_image,1)
 ref_image_face_width = face_data(ref_image)
 focal_length_found = focal_length(KNOWN_DISTANCE_FACE, KNOWN_WIDTH_FACE, ref_image_face_width)
 # print(focal_length_found)

@@ -1,4 +1,6 @@
 import numpy as np
+import os
+os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 from cv2.data import haarcascades
 import random
@@ -7,10 +9,14 @@ from skimage import measure
 import argparse
 import datetime
 import time
+
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import urllib
 import requests
 import imutils
+from PIL import Image as im
 
 from detection.mask import create_mask
 from detection.face import detect_face, get_largest_frame
@@ -28,7 +34,7 @@ class Runner:
         self.bw_threshold = 80
 
         # Maybe lower for high quality video and higher for live video
-        self.pupil_threshold = 60 #25
+        self.pupil_threshold = 95 #25
 
         # User message
         self.font = cv2.FONT_HERSHEY_SIMPLEX
@@ -55,6 +61,7 @@ class Runner:
         self.previous_left_pupil_direction = None
         self.previous_right_pupil_coords = None
         self.previous_right_pupil_direction = None
+        self.previous_ball_distance = 0
         self.previous_ball_to_face_distance = None
 
         self.direction_change_count = 0
@@ -75,7 +82,9 @@ class Runner:
         # Create video writer
         frame_width, frame_height, _ = img.shape
 
-        size = (frame_width, frame_height)
+        # size = (frame_width, frame_height)
+        size = (frame_height, frame_width)
+
 
         currentTime = time.time() # seconds from UTC
         currentTime = time.ctime(currentTime)
@@ -84,7 +93,7 @@ class Runner:
         capWriter_filename = "data/results/" + currentTime + ".avi"
         self.capWriter = cv2.VideoWriter(capWriter_filename, 
                                  cv2.VideoWriter_fourcc(*'MJPG'),
-                                 10, size)
+                                 25, size)
 
     def find_pupil_direction(self, pupil_coords, previous_pupil_coords):
         if previous_pupil_coords is None:
@@ -138,7 +147,16 @@ class Runner:
             # Draw rectangle on face
             for (x, y, w, h) in faces:
                 face_distance = get_distance_face(img, faces)
-                ball_distance = get_distance_ball(img, ball)
+
+                if len(ball) != 0:
+                    ball_distance = get_distance_ball(img, ball)
+                else:
+                    ball_distance = self.previous_ball_distance
+
+                if ball_distance > face_distance:
+                    ball_distance = self.previous_ball_distance
+                self.previous_ball_distance = ball_distance
+
                 ball_to_face_distance = face_distance-ball_distance
 
                 if not self.user_positioned and ball_to_face_distance > 0 and ball_distance != 0:
@@ -157,7 +175,7 @@ class Runner:
 
                 self.frame_count += 1
                 if self.frame_count >= self.direction_change_frames:
-                    print(self.direction_change_count)
+                    print("Direction changes: ", self.direction_change_count)
                     if self.direction_change_count >= self.direction_change_thresh:
                         self.user_wiggling = True
                         print("WIGGLE")
@@ -233,6 +251,7 @@ class Runner:
 
 
         #cv2.imshow('Gray', dst)
+        
         self.capWriter.write(img)
         # cv2.imshow('Amblyopia Treatment', img)
 

@@ -123,13 +123,15 @@ def pupil_detect(eyeArr, bw_threshold):
     # cv2.imshow("Threshold1", threshold)
 
     ### Thresh (working part)
-    # gray = cv2.cvtColor(eyeArr[4:rows - 4, 4:cols - 4], cv2.COLOR_BGR2GRAY)
-    # blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-    # blurred = cv2.medianBlur(blurred, 3)
+    gray = cv2.cvtColor(eyeArr[4:rows - 4, 4:cols - 4], cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    blurred = cv2.medianBlur(blurred, 3)
     
-    # (T, threshInv) = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    (T, threshInv) = thresh
     # cv2.imshow("Threshold", threshInv)
     # print("[INFO] otsu's thresholding value: {}".format(T))
+    threshInv = cv2.threshold(gray_eye, T-30, 255, cv2.THRESH_BINARY_INV)[1]
 
 
     # fit_circle(threshInv)
@@ -145,7 +147,7 @@ def pupil_detect(eyeArr, bw_threshold):
     # cv2.imshow("TH", threshold)
     # cv2.imshow("TH3", th3)
 
-    contours = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[0]
+    contours = cv2.findContours(threshInv, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[0]
     contours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
 
     shape = (0, 0, 0, 0)

@@ -1,12 +1,22 @@
-Pupil Detection and Tracking
+Visual Training
 
 To run:
 python main.py
+python ball\color_picker.py -i 1 --video
 
 Parameters:
 Path to a video file: --filepath data/video/video.mp4
 Define threshold for pupil tracking: --pupilthresh 100
 Use live camera: --camera
+
+--
+runner.py -> backend for tracking and recognition
+server.py -> for remote mobile use (limited by network)
+client.js -> code for remote streaming
+
+main.py -> local runner
+local_client.py -> local flask stuff
+camera_opencv, base_camera -> local opencv stuff
 
 --
 

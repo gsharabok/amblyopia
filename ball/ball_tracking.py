@@ -6,8 +6,10 @@ import cv2
 
 # Define color range for the ball used
 # Can find the value using color_picker
-greenLower = (163, 165, 61)
-greenUpper = (185, 255, 224)
+# greenLower = (163, 165, 61) 
+greenLower = (164, 48, 83)
+# greenUpper = (185, 255, 224) 
+greenUpper = (182, 214, 255)
 
 def track_ball(frame):
     # frame = imutils.resize(frame, width=600)
@@ -28,8 +30,8 @@ def track_ball(frame):
         ((x, y), radius) = ball
         ball_width = radius*2
 
-        if radius > 10:
-            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
+        if radius > 2:
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 1)
 
     return ball
 

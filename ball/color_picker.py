@@ -1,14 +1,17 @@
 import argparse
+import os
+os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 # import imutils
 import numpy as np
 
 colors = []
 lower = np.array([0, 0, 0])
-upper = np.array([0, 0, 0])
+upper = np.array([255, 255, 255])
 
 def on_mouse_click(event, x, y, flags, image):
     if event == cv2.EVENT_LBUTTONUP:
+        print("Clicked at: ", x, y)
         colors.append(image[y,x].tolist())
 
 def on_trackbar_change(position):
@@ -28,7 +31,10 @@ if args["lower"] and args["upper"]:
   upper = np.fromstring(args["upper"], sep=",")
 
 if args["video"]:
-  vidcap = cv2.VideoCapture(args["image"])
+  src = args["image"]
+  if len(args["image"]) == 1:
+    src = int(args["image"])
+  vidcap = cv2.VideoCapture(src, cv2.CAP_DSHOW)
   _,image = vidcap.read()
 else:
   image = cv2.imread(args["image"])
@@ -51,6 +57,7 @@ cv2.createTrackbar("Max S", "image", int(upper[1]), 255, on_trackbar_change)
 cv2.createTrackbar("Max V", "image", int(upper[2]), 255, on_trackbar_change)
 
 # Show HSV image
+cv2.imwrite("data/video/reference_color.jpg", image)
 cv2.imshow("image", hsv)
 
 while True:
@@ -76,15 +83,23 @@ while True:
 
 cv2.destroyAllWindows()
 
-if not colors:
-  exit
+# if not colors:
+#   exit
 
-minh = min(c[0] for c in colors)
-mins = min(c[1] for c in colors)
-minv = min(c[2] for c in colors)
+if len(colors) > 0:
+  minh = min(c[0] for c in colors)
+  mins = min(c[1] for c in colors)
+  minv = min(c[2] for c in colors)
 
-maxh = max(c[0] for c in colors)
-maxs = max(c[1] for c in colors)
-maxv = max(c[2] for c in colors)
+  maxh = max(c[0] for c in colors)
+  maxs = max(c[1] for c in colors)
+  maxv = max(c[2] for c in colors)
 
-print [minh, mins, minv], [maxh, maxs, maxv]
+  print("Mouse Click Selection: ")
+  print([minh, mins, minv])
+  print([maxh, maxs, maxv])
+
+print("Manual Values: ")
+print("({}, {}, {})".format(lower[0], lower[1], lower[2]))
+print("({}, {}, {})".format(upper[0], upper[1], upper[2]))
+

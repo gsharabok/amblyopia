@@ -1,4 +1,6 @@
 import numpy as np
+import os
+os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 from cv2.data import haarcascades
 import random
@@ -11,6 +13,9 @@ import matplotlib.pyplot as plt
 import urllib
 import requests
 import imutils
+
+from imutils.video import WebcamVideoStream
+from imutils.video import FPS
 
 from detection.mask import create_mask
 from detection.face import detect_face, get_largest_frame
@@ -35,7 +40,7 @@ filepath = 'data/video/eye_training_stable.MOV'
 if args.filepath:
     filepath = args.filepath
 if args.camera:
-    filepath = 0
+    filepath = 1
 if args.remote:
     filepath = args.remote
 
@@ -77,6 +82,7 @@ previous_left_pupil_coords = None
 previous_left_pupil_direction = None
 previous_right_pupil_coords = None
 previous_right_pupil_direction = None
+previous_ball_distance = 0
 previous_ball_to_face_distance = None
 
 direction_change_count = 0
@@ -88,23 +94,27 @@ ball_distance_array = []
 left_eye_distance_center_array = []
 right_eye_distance_center_array = []
 
-# Read video
-cap = cv2.VideoCapture(filepath)
+# Threaded video reading
+cap = WebcamVideoStream(src=1).start()
+
+# Normal video reading
+# cap = cv2.VideoCapture(filepath)
+# cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
 
 # Create video writer
-frame_width = int(cap.get(3))
-frame_height = int(cap.get(4))
+# frame_width = int(cap.get(3))
+# frame_height = int(cap.get(4))
    
-size = (frame_width, frame_height)
+# size = (frame_width, frame_height)
 
-currentTime = time.time() # seconds from UTC
-currentTime = time.ctime(currentTime)
-currentTime = str(currentTime).replace(" ", "_").replace(":", "_").strip()
+# currentTime = time.time() # seconds from UTC
+# currentTime = time.ctime(currentTime)
+# currentTime = str(currentTime).replace(" ", "_").replace(":", "_").strip()
 
-capWriter_filename = "data/results/" + currentTime + ".avi"
-capWriter = cv2.VideoWriter(capWriter_filename, 
-                         cv2.VideoWriter_fourcc(*'MJPG'),
-                         10, size)
+# capWriter_filename = "data/results/" + currentTime + ".avi"
+# capWriter = cv2.VideoWriter(capWriter_filename, 
+#                          cv2.VideoWriter_fourcc(*'MJPG'),
+#                          10, size)
 
 # init_get_distance()
 
@@ -135,8 +145,13 @@ def is_direction_change(direction, previous_direction):
 
 
 while 1:
-    ret, img = cap.read()
-    img = cv2.flip(img,1)
+    # Normal Read
+    # ret, img = cap.read()
+    # img = cv2.flip(img,1)
+
+    # Threaded Read
+    img = cap.read()
+    img = imutils.resize(img, width=400)
 
     # Convert Image into gray
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -166,7 +181,11 @@ while 1:
         # Draw rectangle on face
         for (x, y, w, h) in faces:
             face_distance = get_distance_face(img, faces)
-            ball_distance = get_distance_ball(img, ball)
+            if len(ball) != 0:
+                ball_distance = get_distance_ball(img, ball)
+            else:
+                ball_distance = previous_ball_distance
+            previous_ball_distance = ball_distance
             ball_to_face_distance = face_distance-ball_distance
 
             ball_distance_array.append(ball_to_face_distance)
@@ -182,7 +201,7 @@ while 1:
 
             frame_count += 1
             if frame_count >= direction_change_frames:
-                print(direction_change_count)
+                print("Direction changes: ", direction_change_count)
                 if direction_change_count >= direction_change_thresh:
                     print("WIGGLE")
                 direction_change_count = 0
@@ -277,15 +296,15 @@ while 1:
     #dst = cv2.inpaint( img, create_mask(img), 0.8, cv2.INPAINT_NS)
 
     #cv2.imshow('Gray', dst)
-    capWriter.write(img)
-    cv2.imshow('Amblyopia Treatment', img)
+    # capWriter.write(img)
+    cv2.imshow('Visual Exercises', img)
     k = cv2.waitKey(30) & 0xff
     if k == 27: # Press Esc to kill the program
         break
 
 # Release video
 cap.release()
-capWriter.release()
+# capWriter.release()
 cv2.destroyAllWindows()
 
 def plot_data():

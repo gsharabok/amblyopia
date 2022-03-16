@@ -1,5 +1,0 @@
-socketio_stream -> attempt from stackoverflow, description fits the solution but code has no explanations
-flask-video-streaming -> works but recording from computer webcam not phone; maybe rewrite camera class
-remote-opencv-streaming-live-video -> works but from computer not phone
-
-fyp-master/preparation currently can show video on the phone but don't know how to pass it to python
