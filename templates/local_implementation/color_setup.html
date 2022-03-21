@@ -68,9 +68,16 @@
 
     <div id="container">
         <h2 class="section-heading">Color Setup</h2>
-        <p>
-            Run the color_picker.py script to set up the color.
-        </p>
+        <pre>
+Click on the buttons below to start the color setup.
+When the button is pressed a picture of you will be taken.
+Make sure both your face and the ball are present as indicated in the tutorial.
+Two windows will appear: one for the photo and one for color setup.
+Tweek the toggles until you can only see the ball in white.
+Then press on "q" to exit the color setup.
+        </pre>
+        <a id="button-extract1" href="{{ url_for('extract_color1') }}" class="button column btn btn-outline-primary">Setup First Ball (Red)</a>
+        <a id="button-extract1" href="{{ url_for('extract_color2') }}" class="button column btn btn-outline-primary">Setup Second Ball (Yellow)</a>
     </div>
 
     <!-- <script src="client.js"></script> -->

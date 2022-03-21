@@ -3,6 +3,7 @@ from ball.ball_tracking import track_ball
 from detection.face import get_largest_frame
 import models
 
+
 # Small string 34 cm
 # Face width 14.3 cm
 # Ball width 1.6 cm
@@ -17,7 +18,7 @@ import models
 KNOWN_DISTANCE_FACE = 34  # centimeter
 KNOWN_WIDTH_FACE = 14.3  # centimeter
 
-KNOWN_DISTANCE_BALL = 12  # centimeter
+KNOWN_DISTANCE_BALL = 20  # centimeter
 KNOWN_WIDTH_BALL = 1.6  # centimeter
 
 
@@ -54,7 +55,7 @@ def get_distance_face(frame, faces):
     # cv2.imshow("frame", frame)    
     return Distance
 
-def get_distance_ball(frame, ball):
+def get_distance_ball(frame, ball, second_ball=False):
     if len(ball) == 0: return 0
 
     ((x, y), radius) = ball
@@ -62,11 +63,18 @@ def get_distance_ball(frame, ball):
 
     Distance = 0
     if ball_width_in_frame != 0:
+        print(focal_ball_length_found, KNOWN_WIDTH_BALL, ball_width_in_frame)
         Distance = distance_finder(focal_ball_length_found, KNOWN_WIDTH_BALL, ball_width_in_frame, 0.8)
+        # print(Distance)
 
-        cv2.putText(
-            frame, f"Ball Distance = {round(Distance,2)} CM", (30, 50), fonts, 0.6, (WHITE), 1
-        )
+        if not second_ball:
+            cv2.putText(
+                frame, f"Ball1 Distance = {round(Distance,2)} CM", (30, 50), fonts, 0.6, (WHITE), 1
+            )
+        else:
+            cv2.putText(
+                frame, f"Ball2 Distance = {round(Distance,2)} CM", (30, 70), fonts, 0.6, (WHITE), 1
+            )
 
     return Distance
 
@@ -130,3 +138,5 @@ ball = track_ball(ref_image)
 ((x, y), radius) = ball
 ref_image_ball_width = radius*2
 focal_ball_length_found = focal_length(KNOWN_DISTANCE_BALL, KNOWN_WIDTH_BALL, ref_image_ball_width)
+
+cv2.imwrite("data/video/reference_color_detection.jpg", ref_image)

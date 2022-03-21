@@ -1,0 +1,8 @@
+Only track the closest ball (if ball behind face ignore it)
+There is negative ball to face distance at the end
+When moving the ball, hands cover the face, need a different way
+Add a feature to detect when eye move far out at the end (eg give up and cannot see)
+
+Detect when left eye/right eye distance flattens out and look for jumps (from graph data)
+
+Measure performance over a few videos (how many frames out of total can correctly detect face/eye/pupil/ball %)

@@ -11,11 +11,11 @@ greenLower = (164, 48, 83)
 # greenUpper = (185, 255, 224) 
 greenUpper = (182, 214, 255)
 
-def track_ball(frame):
+def track_ball(frame, lower_color=(0,0,0), upper_color=(255,255,255)):
     # frame = imutils.resize(frame, width=600)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    mask = cv2.inRange(hsv, greenLower, greenUpper)
+    mask = cv2.inRange(hsv, lower_color, upper_color)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
@@ -30,7 +30,7 @@ def track_ball(frame):
         ((x, y), radius) = ball
         ball_width = radius*2
 
-        if radius > 2:
+        if radius > 5:
             cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 1)
 
     return ball

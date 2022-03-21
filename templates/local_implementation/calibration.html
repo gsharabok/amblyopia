@@ -72,14 +72,61 @@
 
     <div id="container">
         <h2 class="section-heading column">Calibration</h2>
-        <a href="{{ url_for('finish_recording') }}" class="button column btn btn-outline-primary">Complete</a>
-        <img src="{{ url_for('video_feed') }}" class="column">
+        <!-- <input type=”button” value=”call_flask_funtion” id="imgClickAndChange" onclick="changeImage()"> -->
+        <a id="button-start" onclick="startVideo()" class="button column btn btn-outline-primary">Start</a>
+        <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button column btn btn-outline-primary" hidden>Complete</a>
+        <img src="" id="video-stream" class="column">
     </div>
+
+    <iframe src="/music/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
+
+    <audio id="audio1">
+        <source id="audio1_source" src="/music/camera_connected_calibration.mp3" type="audio/mp3">   
+    </audio>
 
     <!-- <script src="client.js"></script> -->
     <!-- Bootstrap core JS-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Core theme JS-->
     <script src="{{ url_for('static', filename='js/scripts.js')}}"></script>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script>
+
+        function startVideo() {
+            document.getElementById("audio1").autoplay = true;   
+
+            document.getElementById("button-start").hidden = true;
+            document.getElementById("button-stop").hidden = false
+            document.getElementById("video-stream").src = "{{ url_for('video_feed_calibration') }}";
+            document.getElementById("audio1").play();
+        }
+
+        function makeInvisible(){
+            document.getElementById("button-stop").hidden = true;
+            document.getElementById("video-stream").hidden = true;
+        }
+
+        $(document).ready(function(){
+            const socket = io();
+            console.log('ready');
+
+            socket.on('connect', function() {
+                console.log('connected: ', socket.id);
+                // socket.emit('connect', {data: 'I\'m connected!'});
+            });
+
+            socket.on('play', function(msg) {
+                console.log(msg)
+                document.getElementById("audio1_source").src = "/music/" + msg;
+                document.getElementById("audio1").pause();
+                document.getElementById("audio1").load();
+                document.getElementById("audio1").play();
+                // $('input#'+msg.who).val(msg.data)
+            });
+        });
+
+    </script>
 </body>
 </html>

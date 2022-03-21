@@ -54,7 +54,7 @@ class VideoTransformTrack(MediaStreamTrack):
                 self.is_writer_init = True
                 self.runner.init_writer(img)
 
-            self.runner.run_detection(img)
+            self.runner.run_detection_calibration(img)
 
             # Play when the ball is in front of the face
             if self.runner.user_positioned and not self.runner.user_positioned_audio:
