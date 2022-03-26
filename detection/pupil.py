@@ -1,12 +1,6 @@
-from unittest.util import three_way_cmp
-from cv2 import threshold
 import numpy as np
 import cv2
-from skimage import io, color, measure, draw, img_as_bool, feature
-from skimage.transform import hough_circle, hough_circle_peaks
-from skimage.draw import circle_perimeter
-from scipy import optimize
-import matplotlib.pyplot as plt
+from skimage import measure, draw, feature
 
 def pupil_thresh(self):
     kernel = np.ones((1, 1), np.uint8)

@@ -1,7 +1,3 @@
-from collections import deque
-import numpy as np
-import argparse
-# import imutils
 import cv2
 
 # Define color range for the ball used

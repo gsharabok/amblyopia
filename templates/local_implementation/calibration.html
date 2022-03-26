@@ -93,6 +93,13 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
     <script>
+        let correctPositionPlayed = false;
+        let checkWigglePlayed = false;
+        let stopTheBallPlayed = false;
+
+        var speechRecognizer = new webkitSpeechRecognition();
+        var recording = false;
+        var r = "" // TODO: continually send things to flask, maybe just push to result every new word
 
         function startVideo() {
             document.getElementById("audio1").autoplay = true;   
@@ -108,6 +115,47 @@
             document.getElementById("video-stream").hidden = true;
         }
 
+        //function to start listening to voice and then convert it to text
+		function startRecording () {
+			if('webkitSpeechRecognition' in window){
+				speechRecognizer.continuous = true;
+				speechRecognizer.interimResults = true;
+				speechRecognizer.lang = 'en-IN';
+				speechRecognizer.start();
+				var finalTranscripts = '';
+				speechRecognizer.onresult = function(event){
+					var interimTranscripts = '';
+					for(var i = event.resultIndex; i < event.results.length; i++){
+						var transcript = event.results[i][0].transcript;
+						transcript.replace("\n", "<br>");
+						if(event.results[i].isFinal){
+							finalTranscripts += transcript;
+						}else{
+							interimTranscripts += transcript;
+						}
+					}
+					r = finalTranscripts + interimTranscripts;
+                    if (r.includes("yes")) {
+                        $.post( "/check_wiggle_result", {
+                            result: true 
+                        });
+                    } else if (r.includes("no")) {
+                        makeInvisible();
+                    }
+                    console.log(r);
+				};
+				speechRecognizer.onerror = function (event) {
+				};
+			}else{
+				r = 'No browser support. Please upgrade your browser';
+                console.log(r);
+			}
+		}
+		//function to stop listening
+		function stopRecording() {
+			speechRecognizer.stop();
+		}
+
         $(document).ready(function(){
             const socket = io();
             console.log('ready');
@@ -119,10 +167,32 @@
 
             socket.on('play', function(msg) {
                 console.log(msg)
-                document.getElementById("audio1_source").src = "/music/" + msg;
-                document.getElementById("audio1").pause();
-                document.getElementById("audio1").load();
-                document.getElementById("audio1").play();
+                
+                if ((msg == 'correct_position.mp3' && !correctPositionPlayed) || 
+                    (msg == 'check_wiggle.mp3' && !checkWigglePlayed) || 
+                    (msg == 'stop_the_ball.mp3' && !stopTheBallPlayed)) {
+
+                        if (msg == 'correct_position.mp3') {
+                            correctPositionPlayed = true;
+                        } else if (msg == 'check_wiggle.mp3') {
+                            checkWigglePlayed = true;
+                        } else if (msg == 'stop_the_ball.mp3') {
+                            stopTheBallPlayed = true;
+                        }
+
+                        if (msg == 'check_wiggle.mp3') {
+                            startRecording();
+                            recording = true;
+                        } else if (msg == 'stop_the_ball.mp3' && recording) {
+                            stopRecording();
+                        }
+        
+                        document.getElementById("audio1_source").src = "/music/" + msg;
+                        document.getElementById("audio1").pause();
+                        document.getElementById("audio1").load();
+                        document.getElementById("audio1").play();        
+                }
+
                 // $('input#'+msg.who).val(msg.data)
             });
         });

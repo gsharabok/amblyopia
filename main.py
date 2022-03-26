@@ -1,29 +1,17 @@
-import numpy as np
 import os
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
-from cv2.data import haarcascades
-import random
-from typing import Optional
-from skimage import measure
 import argparse
-import datetime
-import time
 import matplotlib.pyplot as plt
-import urllib
-import requests
 import imutils
 
 from imutils.video import WebcamVideoStream
-from imutils.video import FPS
 
-from detection.mask import create_mask
-from detection.face import detect_face, get_largest_frame
-from detection.eye import detect_eyes,_cut_eyebrows
-from detection.blob import blob_track
+from detection.face import get_largest_frame
+from detection.eye import detect_eyes
 from detection.pupil import pupil_detect
 from ball.ball_tracking import *
-from face_landmarks.eye_corners import get_eye_corners
+from eye_corners import get_eye_corners
 from distance_measure.distance import get_distance_face, get_distance_ball
 import models
 
@@ -274,26 +262,6 @@ while 1:
 
             previous_ball_to_face_distance = ball_to_face_distance
 
-            # Detect lips counters
-            mouth_rects = models.mouth_cascade.detectMultiScale(gray, 1.5, 5)
-
-        # Face detected but Lips not detected which means person is wearing mask
-        if(len(mouth_rects) == 0):
-            cv2.putText(img, weared_mask, org, font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)
-        else:
-            for (mx, my, mw, mh) in mouth_rects:
-
-                if(y < my < y + h):
-                    # Face and Lips are detected but lips coordinates are within face cordinates which `means lips prediction is true and
-                    # person is not waring mask
-                    cv2.putText(img, not_weared_mask, org, font, font_scale, not_weared_mask_font_color, thickness, cv2.LINE_AA)
-
-                    #cv2.rectangle(img, (mx, my), (mx + mh, my + mw), (0, 0, 255), 3)
-                    break
-
-    # Show frame with results
-    #dst = cv2.GaussianBlur(gray,(5,5),cv2.BORDER_DEFAULT)
-    #dst = cv2.inpaint( img, create_mask(img), 0.8, cv2.INPAINT_NS)
 
     #cv2.imshow('Gray', dst)
     # capWriter.write(img)

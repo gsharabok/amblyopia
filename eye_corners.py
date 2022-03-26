@@ -3,14 +3,19 @@
 
 # import the necessary packages
 from imutils import face_utils
-import numpy as np
-import argparse
-import imutils
 import dlib
 import cv2
+import sys
+import os.path
 
+if getattr(sys, 'frozen', False):
+	EXE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
+else:
+	EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) ) # Other packers
+	
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor('face_landmarks/shape_predictor_68_face_landmarks.dat')
+# predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+predictor = dlib.shape_predictor(os.path.join( EXE_LOCATION, 'shape_predictor_68_face_landmarks.dat'))
 
 # Args: full gray image, face bounding box
 # Returns: left eye corner, right eye corner

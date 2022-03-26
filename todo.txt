@@ -6,3 +6,12 @@ Add a feature to detect when eye move far out at the end (eg give up and cannot 
 Detect when left eye/right eye distance flattens out and look for jumps (from graph data)
 
 Measure performance over a few videos (how many frames out of total can correctly detect face/eye/pupil/ball %)
+
+
+// eventlet, greenlet, gevent
+pyinstaller -c -F --hidden-import=engineio.async_gevent --add-data "templates;templates" --add-data "static;static" local_client.py
+
+('shape_predictor_68_face_landmarks.dat',
+                'importlib_resources')
+('D:\\fyp-master\venv\Lib\site-packages\cv2\data\*',
+             'cv2\data'),

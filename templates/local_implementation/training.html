@@ -78,7 +78,7 @@
 
     <iframe src="/music/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
 
-    <audio id="audio1" autoplay>
+    <audio id="audio1">
         <source id="audio1_source" src="/music/camera_connected_calibration.mp3" type="audio/mp3">   
     </audio>
 
@@ -122,6 +122,28 @@
                 document.getElementById("audio1").play();
                 // $('input#'+msg.who).val(msg.data)
             });
+
+            // socket.on('multiple_play', function(msg) {
+            //     console.log(msg)
+            //     document.getElementById("audio1_source").src = "/music/" + msg;
+            //     document.getElementById("audio1").pause();
+            //     document.getElementById("audio1").load();
+            //     document.getElementById("audio1").play();
+                
+            //     var strings = "Hello how are you".split(" ");
+            //     var index = 1;
+
+            //     audio.src='http://translate.google.com/translate_tts?&tl=en&q=' + strings[0];
+            //     audio.play();
+
+            //     audio.onended = function() {
+            //         if(index < strings.length){
+            //             audio.src='http://translate.google.com/translate_tts?&tl=en&q=' + strings[index];
+            //             audio.play();
+            //             index++;
+            //         }
+            //     };
+            // });
         });
     </script>
 </body>

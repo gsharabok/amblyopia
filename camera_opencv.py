@@ -5,7 +5,7 @@ from base_camera import BaseCamera
 
 
 class Camera(BaseCamera):
-    video_source = 1
+    video_source = 0
     dim1, dim2, dim3 = (0,0,0)
 
     def __init__(self):

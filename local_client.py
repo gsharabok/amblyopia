@@ -1,28 +1,30 @@
-#!/usr/bin/env python
-from cProfile import run
 from importlib import import_module
 import os
+import sys
 
-from ball.color_picker_func import extract_color
+from ball.color_picker_func import extract_color, reset_colors
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 import numpy as np
-import sched, time
-import subprocess
+import time
 import threading
 import webbrowser
 import time
-from flask import Flask, render_template, Response, send_from_directory
-from flask_socketio import SocketIO, emit
+from flask import Flask, render_template, Response, send_from_directory, request
+from flask_socketio import SocketIO
+from engineio.async_drivers import gevent
 
 from runner import Runner
 runner_calibration = Runner()
 runner_training = Runner()
+runner_training.is_training = True
+
 is_writer_init = False
 continue_running = True
 
 second_eye = True
 send_eye_switch = False
+diverse_ball_sound = False
 # loop = sched.scheduler(time.time, time.sleep)
 
 # import camera driver
@@ -31,7 +33,13 @@ if os.environ.get('CAMERA'):
 else:
     from camera_opencv import Camera
 
-app = Flask(__name__)
+if getattr(sys, 'frozen', False):
+    template_folder = os.path.join(sys._MEIPASS, 'templates')
+    app = Flask(__name__, template_folder=template_folder)
+else:
+    app = Flask(__name__)
+# app = Flask(__name__)
+
 socketio = SocketIO(app)
 
 @app.route('/')
@@ -78,18 +86,23 @@ def gen_calibration(camera):
             is_writer_init = True
             runner_calibration.init_writer(frame)
 
-        runner_calibration.run_detection_calibration(frame)
+        frame = runner_calibration.run_detection_calibration(frame)
         # emit('update value', "hello", broadcast=True)
 
         if runner_calibration.user_positioned and not runner_calibration.user_positioned_audio:
             print("Sent User Positioned Audio")
-            socketio.emit('play', 'correct_position.mp3')
             runner_calibration.user_positioned_audio = True
+            socketio.emit('play', 'correct_position.mp3')
 
         if runner_calibration.user_wiggling and not runner_calibration.user_wiggling_audio:
                 print("Sent User Wiggling Audio")
-                socketio.emit('play', 'stop_the_ball.mp3')
                 runner_calibration.user_wiggling_audio = True
+                socketio.emit('play', 'stop_the_ball.mp3')
+
+        if runner_calibration.user_wiggling2 and not runner_calibration.user_wiggling2_audio:
+                print("Check if user wiggled")
+                runner_calibration.user_wiggling2_audio = True
+                socketio.emit('play', 'check_wiggle.mp3')
 
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
 
@@ -99,21 +112,29 @@ def gen_calibration(camera):
 
 
 def switch_eye():
-    global second_eye, send_eye_switch
+    global second_eye, send_eye_switch, runner_training, diverse_ball_sound
     starttime = time.time()
 
     i = 0
-    while i<20:
+    while i<6:
         # print("tick")
         time.sleep(6.0 - ((time.time() - starttime) % 6.0))
+
+        if i != 0 and i % 5 == 0:
+            diverse_ball_sound = True
         send_eye_switch = True
+
         i+=1
+        runner_training.training_reps += 1
+
+    runner_training.training_finished = True
+    runner_training.training_session_time = time.time() - runner_training.training_start_time
 
 def gen_training(camera):
     """Video streaming generator function."""
     
     global is_writer_init, runner_training, continue_running
-    global send_eye_switch, second_eye
+    global send_eye_switch, second_eye, diverse_ball_sound
     # runner_training.ball1_lower = (164, 48, 83)
     # runner_training.ball1_upper = (182, 214, 255)
     # runner_training.ball2_lower = (40, 10, 207)
@@ -130,7 +151,7 @@ def gen_training(camera):
             is_writer_init = True
             runner_training.init_writer(frame)
 
-        runner_training.run_detection_training(frame)
+        frame = runner_training.run_detection_training(frame)
 
         if runner_training.user_positioned and not runner_training.user_positioned_audio:
             print("Sent User Second Ball Audio")
@@ -138,6 +159,7 @@ def gen_training(camera):
             second_eye = False
 
             runner_training.user_positioned_audio = True
+            runner_training.training_start_time = time.time()
 
             th = threading.Thread(target=switch_eye)
             th.start()
@@ -147,20 +169,38 @@ def gen_training(camera):
         if send_eye_switch:
             print("Sent Eye Switch Audio")
             if second_eye:
-                socketio.emit('play', 'second_ball1.mp3')
+                if diverse_ball_sound:
+                    socketio.emit('play', 'second_ball2.mp3')
+                    diverse_ball_sound = False
+                else:
+                    socketio.emit('play', 'second_ball1.mp3')
                 second_eye = False
             else:
-                socketio.emit('play', 'first_ball1.mp3')
+                if diverse_ball_sound:
+                    socketio.emit('play', 'first_ball2.mp3')
+                    diverse_ball_sound = False
+                else:
+                    socketio.emit('play', 'first_ball1.mp3')
                 second_eye = True
             send_eye_switch = False
+
+        if runner_training.training_finished:
+            print("Training Finished")
+            continue_running = False
+            socketio.emit('play', 'session_complete.mp3')
 
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
 
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
-    th.join()
-
     runner_training.finish()
+
+    while not runner_training.training_feedback_ready:
+        time.sleep(1)
+    print("Sent")
+    socketio.emit('play', 'combined/combined.mp3')
+
+    th.join()
 
 
 @app.route('/video_feed_calibration')
@@ -177,8 +217,12 @@ def video_feed_training():
 
 @app.route('/finish_recording')
 def finish_recording():
-    global continue_running
+    global continue_running, runner_training
     continue_running = False
+
+    if not runner_training.training_finished and runner_training.training_start_time != None:
+        runner_training.training_session_time = time.time() - runner_training.training_start_time
+    
     return '', 204
 
 @app.route('/music/<path:filename>')
@@ -195,7 +239,10 @@ def extract_color1():
     runner_training.ball1_lower = lower
     runner_training.ball1_upper = upper
 
+    reset_colors()
+
     return '', 204
+
 
 @app.route('/extract_color2')
 def extract_color2():
@@ -207,6 +254,19 @@ def extract_color2():
 
     return '', 204
 
+@app.route('/check_wiggle_result', methods=['POST'])
+def check_wiggle_result():
+    global runner_calibration
+
+    jsdata = request.form['result']
+
+    if jsdata == 'true':
+        runner_calibration.user_wiggling = True
+
+    socketio.emit('play', 'stop_the_ball.mp3')
+    return '', 204
+
+
 @socketio.on('message')
 def handle_message(data):
     print('received message: ' + data)
@@ -215,7 +275,7 @@ def handle_message(data):
 def open_browser():
       webbrowser.open_new('http://127.0.0.1:5000/')
 
-if __name__ == '__main__':
+if __name__.endswith('__main__'):
     threading.Timer(1, open_browser).start()
     socketio.run(app, host='0.0.0.0')
 

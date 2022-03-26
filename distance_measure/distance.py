@@ -3,7 +3,6 @@ from ball.ball_tracking import track_ball
 from detection.face import get_largest_frame
 import models
 
-
 # Small string 34 cm
 # Face width 14.3 cm
 # Ball width 1.6 cm
