@@ -2,6 +2,9 @@ from importlib import import_module
 import os
 import sys
 
+# from gevent import monkey
+# monkey.patch_all()
+
 from ball.color_picker_func import extract_color, reset_colors
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
@@ -11,8 +14,14 @@ import threading
 import webbrowser
 import time
 from flask import Flask, render_template, Response, send_from_directory, request
-from flask_socketio import SocketIO
-from engineio.async_drivers import gevent
+from flask_socketio import SocketIO, emit, send
+
+from threading import Lock
+import eventlet
+from engineio.async_drivers import eventlet as evt
+eventlet.monkey_patch()
+# async_mode = "eventlet"
+
 
 from runner import Runner
 runner_calibration = Runner()
@@ -25,6 +34,8 @@ continue_running = True
 second_eye = True
 send_eye_switch = False
 diverse_ball_sound = False
+
+to_send = None
 # loop = sched.scheduler(time.time, time.sleep)
 
 # import camera driver
@@ -40,7 +51,7 @@ else:
     app = Flask(__name__)
 # app = Flask(__name__)
 
-socketio = SocketIO(app)
+socketio = SocketIO(app) # , async_mode=async_mode
 
 @app.route('/')
 @app.route('/index')
@@ -61,7 +72,7 @@ def color_setup():
 @app.route('/calibration')
 def calibration():
     """Ball Distance Setup Page."""
-    return render_template('local_implementation/calibration.html', sound="well_done.mp3")
+    return render_template('local_implementation/calibration_test.html', sound="well_done.mp3") #, async_mode=socketio.async_mode
 
 @app.route('/training')
 def training():
@@ -92,7 +103,11 @@ def gen_calibration(camera):
         if runner_calibration.user_positioned and not runner_calibration.user_positioned_audio:
             print("Sent User Positioned Audio")
             runner_calibration.user_positioned_audio = True
-            socketio.emit('play', 'correct_position.mp3')
+            global to_send
+            to_send = 'correct_position.mp3'
+            # socketio.send('play', 'correct_position.mp3') #, namespace="/audio"
+            # emit('play', 'correct_position.mp3')
+            # emit('play', 'correct_position.mp3',broadcast=True)
 
         if runner_calibration.user_wiggling and not runner_calibration.user_wiggling_audio:
                 print("Sent User Wiggling Audio")
@@ -267,10 +282,69 @@ def check_wiggle_result():
     return '', 204
 
 
-@socketio.on('message')
-def handle_message(data):
-    print('received message: ' + data)
+def background_thread():
+    """Example of how to send server generated events to clients."""
+    # count = 0
+    while True:
+        socketio.sleep(1)
+        # count += 1
+        global to_send
+        if to_send is not None:
+            socketio.emit('my_response', to_send)
+        # else:
+        #     socketio.emit('my_response',
+        #               {'data': 'Server generated event', 'count': count})
 
+# @socketio.event
+# def my_ping():
+#     print("pong")
+#     global to_send
+#     if to_send is not None:
+#         print('sending: ', to_send)
+#         emit(to_send)
+#         to_send = None
+#     else:
+#         emit('my_pong')
+
+# @socketio.event
+# def connect():
+#     emit('my_response', {'data': 'Connected', 'count': 0})
+
+# @socketio.on('connect')
+# def test_connect(auth):
+#     emit('my response', {'data': 'Connected'})
+
+# @socketio.on('my event')
+# def handle_my_custom_event(json):
+#     print('received json: ' + str(json))
+
+# @socketio.on('message')
+# def handle_message(data):
+#     print('received message: ' + data)
+
+# @socketio.on('message', namespace='/video')
+# def on_connect1():
+#     print("I'm connected to the /video namespace!")
+
+# @socketio.on('message', namespace='/audio')
+# def on_connect2():
+#     print("I'm connected to the /audio namespace!")
+
+thread = None
+thread_lock = Lock()
+
+@socketio.event
+def connect():
+    print("Connected")
+    global thread
+    with thread_lock:
+        if thread is None:
+            thread = socketio.start_background_task(background_thread)
+    emit('my_response', {'data': 'Connected', 'count': 0})
+
+@socketio.on('disconnect')
+def test_disconnect():
+    print('Client disconnected', request.sid)
 
 def open_browser():
       webbrowser.open_new('http://127.0.0.1:5000/')

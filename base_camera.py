@@ -2,11 +2,14 @@ import time
 import threading
 try:
     from greenlet import getcurrent as get_ident
+    print("greenlet")
 except ImportError:
     try:
         from thread import get_ident
+        print("thread")
     except ImportError:
         from _thread import get_ident
+        print("_tread")
 
 
 class CameraEvent(object):

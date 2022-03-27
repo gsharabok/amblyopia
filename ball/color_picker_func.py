@@ -70,8 +70,17 @@ def extract_color():
     cv2.createTrackbar("Max S", "image", int(upper[1]), 255, on_trackbar_change)
     cv2.createTrackbar("Max V", "image", int(upper[2]), 255, on_trackbar_change)
 
+    path = 'data/'
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     # Show HSV image
-    cv2.imwrite("data/video/reference_color.jpg", image)
+    # cv2.imwrite("data/video/reference_color.jpg", image)
+    if models.is_frozen:
+        cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
+    else:
+        cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
+    
     cv2.imshow("image", hsv)
     # cv2.setWindowProperty('image', cv2.WND_PROP_TOPMOST, 1)
 

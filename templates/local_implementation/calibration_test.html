@@ -90,9 +90,9 @@
     <!-- Core theme JS-->
     <script src="{{ url_for('static', filename='js/scripts.js')}}"></script>
 
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-    <script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
         let correctPositionPlayed = false;
         let checkWigglePlayed = false;
         let stopTheBallPlayed = false;
@@ -163,13 +163,69 @@
 
             socket.on('connect', function() {
                 console.log('connected video: ', socket.id);
-                socket.emit('my event', {data: 'I\'m connected!'});
+                socket.emit('my_event', {data: 'I\'m connected!'});
             });
 
-            // socket_audio.on('connect', function() {
-            //     console.log('connected audio: ', socket.id);
-            //     socket_audio.emit('message', {data: 'I\'m connected!'});
+            socket.on('my_response', function(msg, cb) {
+                console.log('Received #' + msg.count + ': ' + msg.data)
+                playAudio(msg);
+                // if (cb)
+                //     cb();
+            });
+
+            // var ping_pong_times = [];
+            // var start_time;
+            // window.setInterval(function() {
+            //     start_time = (new Date).getTime();
+            //     console.log("transport: " + socket.io.engine.transport.name)
+            //     // $('#transport').text(socket.io.engine.transport.name);
+            //     socket.emit('my_ping');
+            // }, 1000);
+
+            
+            // socket.on('my_pong', function(msg) {
+            //     console.log(msg)
+            //     // playAudio(msg)
+
+            //     var latency = (new Date).getTime() - start_time;
+            //     ping_pong_times.push(latency);
+            //     ping_pong_times = ping_pong_times.slice(-30); // keep last 30 samples
+            //     var sum = 0;
+            //     for (var i = 0; i < ping_pong_times.length; i++)
+            //         sum += ping_pong_times[i];
+            //     console.log("ping-pong: ", Math.round(10 * sum / ping_pong_times.length) / 10)
+            //     // $('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
             // });
+
+            function playAudio(msg){
+                console.log('playing: ', msg)
+                if ((msg == 'correct_position.mp3' && !correctPositionPlayed) || 
+                    (msg == 'check_wiggle.mp3' && !checkWigglePlayed) || 
+                    (msg == 'stop_the_ball.mp3' && !stopTheBallPlayed)) {
+
+                        if (msg == 'correct_position.mp3') {
+                            correctPositionPlayed = true;
+                        } else if (msg == 'check_wiggle.mp3') {
+                            checkWigglePlayed = true;
+                        } else if (msg == 'stop_the_ball.mp3') {
+                            stopTheBallPlayed = true;
+                        }
+
+                        if (msg == 'check_wiggle.mp3') {
+                            startRecording();
+                            recording = true;
+                        } else if (msg == 'stop_the_ball.mp3' && recording) {
+                            stopRecording();
+                        }
+
+                        console.log('about to play: ', msg)
+        
+                        document.getElementById("audio1_source").src = "/music/" + msg;
+                        document.getElementById("audio1").pause();
+                        document.getElementById("audio1").load();
+                        document.getElementById("audio1").play();        
+                }
+            }
 
             socket.on('play', function(msg) {
                 console.log(msg)

@@ -8,10 +8,9 @@ Detect when left eye/right eye distance flattens out and look for jumps (from gr
 Measure performance over a few videos (how many frames out of total can correctly detect face/eye/pupil/ball %)
 
 
-// eventlet, greenlet, gevent
+// eventlet, greenlet, gevent; engineio; opencv-contrib-python, opencv-python-headless
+// flask-socketio==4.3.2
 pyinstaller -c -F --hidden-import=engineio.async_gevent --add-data "templates;templates" --add-data "static;static" local_client.py
+(-F for single file)
 
-('shape_predictor_68_face_landmarks.dat',
-                'importlib_resources')
-('D:\\fyp-master\venv\Lib\site-packages\cv2\data\*',
-             'cv2\data'),
+pyinstaller local_client.spec

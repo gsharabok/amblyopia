@@ -5,13 +5,17 @@ import os.path
 
 if getattr(sys, 'frozen', False):
 	EXE_LOCATION = os.path.dirname( sys.executable ) # cx_Freeze frozen
+	is_frozen = True
 else:
 	EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) ) # Other packers
+	is_frozen = False
 
-# face_cascade = cv2.CascadeClassifier(haarcascades + "haarcascade_frontalface_default.xml")
-# eye_cascade = cv2.CascadeClassifier(haarcascades + "haarcascade_eye_tree_eyeglasses.xml")
-face_cascade = cv2.CascadeClassifier(os.path.join( EXE_LOCATION,'cv2','data','haarcascade_frontalface_default.xml'))
-eye_cascade = cv2.CascadeClassifier(os.path.join( EXE_LOCATION, 'cv2','data','haarcascade_eye_tree_eyeglasses.xml'))
+if is_frozen:
+	face_cascade = cv2.CascadeClassifier(os.path.join( EXE_LOCATION,'cv2','data','haarcascade_frontalface_default.xml'))
+	eye_cascade = cv2.CascadeClassifier(os.path.join( EXE_LOCATION, 'cv2','data','haarcascade_eye_tree_eyeglasses.xml'))
+else:
+	face_cascade = cv2.CascadeClassifier(haarcascades + "haarcascade_frontalface_default.xml")
+	eye_cascade = cv2.CascadeClassifier(haarcascades + "haarcascade_eye_tree_eyeglasses.xml")
 
 # eye_cascade = cv2.CascadeClassifier(haarcascades + "haarcascade_eye.xml")
 # lefteye_cascade = cv2.CascadeClassifier(haarcascades + "haarcascade_lefteye_2splits.xml")

@@ -115,7 +115,19 @@ class Runner:
         currentTime = time.ctime(currentTime)
         currentTime = str(currentTime).replace(" ", "_").replace(":", "_").strip()
 
-        capWriter_filename = "data/results/" + currentTime + ".avi"
+        path = 'data/results'
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        path = 'data/results/plots'
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        if models.is_frozen:
+            capWriter_filename = os.path.join(models.EXE_LOCATION,'data','results',currentTime + ".avi")
+        else:
+            capWriter_filename = "data/results/" + currentTime + ".avi"
+            
         self.capWriter = cv2.VideoWriter(capWriter_filename, 
                                  cv2.VideoWriter_fourcc(*'MJPG'),
                                  20, size)
@@ -148,10 +160,10 @@ class Runner:
         return False
 
     def check_for_wiggle(self):
-        print("Direction changes: ", self.direction_change_count)
-        print("Eyes not moving in: ", self.eyes_not_moving_in)
-        print("Eyes moving out: ", self.eyes_moving_out)
-        print("Ball closer count: ", self.ball_closer_count, "\n")
+        # print("Direction changes: ", self.direction_change_count)
+        # print("Eyes not moving in: ", self.eyes_not_moving_in)
+        # print("Eyes moving out: ", self.eyes_moving_out)
+        # print("Ball closer count: ", self.ball_closer_count, "\n")
 
         if self.direction_change_count >= self.direction_change_thresh:
             self.user_wiggling = True
@@ -521,7 +533,10 @@ class Runner:
         if not os.path.exists(path):
             os.makedirs(path)
 
-        filename = 'data/results/log/' + datetime.today().strftime('%Y-%m-%d') + '.txt'
+        if models.is_frozen:
+            filename = os.path.join(models.EXE_LOCATION,'data','results','log',datetime.today().strftime('%Y-%m-%d') + '.txt')
+        else:
+            filename = 'data/results/log/' + datetime.today().strftime('%Y-%m-%d') + '.txt'
 
         session_count = 0
 
@@ -589,7 +604,10 @@ class Runner:
         audios = ["from_your_last_session"]
         send_audio = False
 
-        filename = 'data/results/log/' + datetime.today().strftime('%Y-%m-%d') + '.txt'
+        if models.is_frozen:
+            filename = os.path.join(models.EXE_LOCATION,'data','results','log',datetime.today().strftime('%Y-%m-%d') + '.txt')
+        else:
+            filename = 'data/results/log/' + datetime.today().strftime('%Y-%m-%d') + '.txt'
 
         session_found = False
         past_training_time = 0
@@ -664,17 +682,27 @@ class Runner:
     def plot_data(self):
         indx = [x for x in range(0, len(self.ball_to_face_distance_array))]
         plt.scatter(indx, self.ball_to_face_distance_array, color='red', label='Ball Distance')
-        plt.savefig('data/results/plots/ball_distance.png', bbox_inches='tight')
+        if models.is_frozen:
+            plt.savefig(os.path.join(models.EXE_LOCATION,'data','results','plots','ball_distance.png'), bbox_inches='tight')
+        else:
+            plt.savefig('data/results/plots/ball_distance.png', bbox_inches='tight')
+        
         plt.close()
 
         indx = [x for x in range(0, len(self.left_eye_distance_center_array))]
         plt.scatter(indx, self.left_eye_distance_center_array, color='blue', label='Left Eye Distance')
-        plt.savefig('data/results/plots/left_eye_distance.png', bbox_inches='tight')
+        if models.is_frozen:
+            plt.savefig(os.path.join(models.EXE_LOCATION,'data','results','plots','left_eye_distance.png'), bbox_inches='tight')
+        else:
+            plt.savefig('data/results/plots/left_eye_distance.png', bbox_inches='tight')
         plt.close()
 
         indx = [x for x in range(0, len(self.right_eye_distance_center_array))]
         plt.scatter(indx, self.right_eye_distance_center_array, color='green', label='Right Eye Distance')
-        plt.savefig('data/results/plots/right_eye_distance.png', bbox_inches='tight')
+        if models.is_frozen:
+            plt.savefig(os.path.join(models.EXE_LOCATION,'data','results','plots','right_eye_distance.png'), bbox_inches='tight')
+        else:
+            plt.savefig('data/results/plots/right_eye_distance.png', bbox_inches='tight')
         plt.close()
 
     def finish(self):

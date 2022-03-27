@@ -1,4 +1,5 @@
 import cv2
+import os.path
 from ball.ball_tracking import track_ball
 from detection.face import get_largest_frame
 import models
@@ -39,7 +40,12 @@ class Distance:
 
         # TODO: expects a face and a ball to be present for calibration
 
-        self.ref_image = cv2.imread("data/video/reference_color.jpg")
+        if models.is_frozen:
+            self.ref_image = cv2.imread(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'))
+        else:
+            self.ref_image = cv2.imread(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'))
+
+
         self.ref_image = cv2.flip(self.ref_image,1)
         self.ref_image_face_width = self.face_data(self.ref_image)
         self.focal_length_found = self.focal_length(self.KNOWN_DISTANCE_FACE, self.KNOWN_WIDTH_FACE, self.ref_image_face_width)
