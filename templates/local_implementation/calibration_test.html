@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visual Training Local</title>
+    <title>Visual Training</title>
 
     <!-- Font Awesome icons (free version)-->
     <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js" crossorigin="anonymous"></script>
@@ -62,7 +62,8 @@
           <div class="collapse navbar-collapse" id="navbarResponsive">
               <ul class="navbar-nav ms-auto py-4 py-lg-0">
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="index">Home</a></li>
-                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="tutorial">Tutorial</a></li>
+                  <!-- <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="tutorial">Tutorial</a></li> -->
+                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="color_setup">Setup</a></li>
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="calibration">Calibration</a></li>
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="training">Training</a></li>
               </ul>
@@ -73,9 +74,21 @@
     <div id="container">
         <h2 class="section-heading column">Calibration</h2>
         <!-- <input type=”button” value=”call_flask_funtion” id="imgClickAndChange" onclick="changeImage()"> -->
-        <a id="button-start" onclick="startVideo()" class="button column btn btn-outline-primary">Start</a>
-        <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button column btn btn-outline-primary" hidden>Complete</a>
-        <img src="" id="video-stream" class="column">
+        <div id="tutorial-container" class="d-flex flex-column">
+            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/4rDygaF3Dog"
+                  frameborder="0" width="600" height="338">
+            </iframe>
+            <a id="tutorial-btn" onclick="finishTutorial()" class="button row m-2 btn btn-outline-primary">I am ready!</a>
+        </div>
+
+        <div id="calibration-container" hidden>
+            <a id="button-start" onclick="startVideo()" class="button row btn btn-outline-primary">Start</a>
+            <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button row btn btn-outline-primary" hidden>Complete</a>
+            <img src="" id="video-stream" class="row">
+        </div>
+
+        <img id="well-done" class="align-self-center" src="static/img/well_done.gif" alt="" style="width:350px;height:100px;" hidden>
+        <a id="train-btn" href="training" class="button row m-2 btn btn-outline-primary align-self-center" hidden>Go to training!</a>
     </div>
 
     <iframe src="/music/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
@@ -101,6 +114,14 @@
         var recording = false;
         var r = "" // TODO: continually send things to flask, maybe just push to result every new word
 
+        function finishTutorial() {
+            document.getElementById("tutorial-container").hidden = true
+            document.getElementById("tutorial-vid").hidden = true
+            document.getElementById("tutorial-btn").hidden = true
+
+            document.getElementById("calibration-container").hidden = false
+        }
+
         function startVideo() {
             document.getElementById("audio1").autoplay = true;   
 
@@ -110,9 +131,15 @@
             document.getElementById("audio1").play();
         }
 
-        function makeInvisible(){
+        async function makeInvisible(){
             document.getElementById("button-stop").hidden = true;
             document.getElementById("video-stream").hidden = true;
+            document.getElementById("video-stream").src = "";
+
+            document.getElementById("well-done").hidden = false;
+            await new Promise(r => setTimeout(r, 6000));
+            document.getElementById("well-done").hidden = true;
+            document.getElementById("train-btn").hidden = false;
         }
 
         //function to start listening to voice and then convert it to text
@@ -157,6 +184,8 @@
 		}
 
         $(document).ready(function(){
+            $.post( "/prepare_color_data", {});
+
             const socket = io();
             // const socket_audio = io("/audio");
             console.log('ready');

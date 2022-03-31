@@ -105,7 +105,12 @@ def extract_color():
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
+        if cv2.getWindowProperty('image',cv2.WND_PROP_VISIBLE) < 1 \
+            or cv2.getWindowProperty('mask',cv2.WND_PROP_VISIBLE) < 1:        
+            break
+
     cv2.destroyAllWindows()
+    cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','manual.jpg'), mask)
 
     # if not colors:
     #   exit
@@ -122,6 +127,12 @@ def extract_color():
       print("Mouse Click Selection: ")
       print([minh, mins, minv])
       print([maxh, maxs, maxv])
+
+      mask = cv2.inRange(hsv, np.array([minh, mins, minv]), np.array([maxh, maxs, maxv]))
+      mask = cv2.erode(mask, None, iterations=2)
+      mask = cv2.dilate(mask, None, iterations=2)
+      cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','auto.jpg'), mask)
+
 
     print("Manual Values: ")
     print("({}, {}, {})".format(lower[0], lower[1], lower[2]))

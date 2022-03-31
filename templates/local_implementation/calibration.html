@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visual Training Local</title>
+    <title>Visual Training</title>
 
     <!-- Font Awesome icons (free version)-->
     <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js" crossorigin="anonymous"></script>
@@ -62,7 +62,8 @@
           <div class="collapse navbar-collapse" id="navbarResponsive">
               <ul class="navbar-nav ms-auto py-4 py-lg-0">
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="index">Home</a></li>
-                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="tutorial">Tutorial</a></li>
+                  <!-- <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="tutorial">Tutorial</a></li> -->
+                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="color_setup">Setup</a></li>
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="calibration">Calibration</a></li>
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="training">Training</a></li>
               </ul>
@@ -157,6 +158,8 @@
 		}
 
         $(document).ready(function(){
+            // $.post( "/prepare_color_data", {});
+
             const socket = io();
             // const socket_audio = io("/audio");
             console.log('ready');

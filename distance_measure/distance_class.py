@@ -17,10 +17,10 @@ class Distance:
 
 
         # Testing distances
-        self.KNOWN_DISTANCE_FACE = 34  # centimeter
-        self.KNOWN_WIDTH_FACE = 14.3  # centimeter
+        self.KNOWN_DISTANCE_FACE = 40  # centimeter
+        self.KNOWN_WIDTH_FACE = 13.5  # centimeter
 
-        self.KNOWN_DISTANCE_BALL = 20  # centimeter
+        self.KNOWN_DISTANCE_BALL = 25  # centimeter
         self.KNOWN_WIDTH_BALL = 1.6  # centimeter
 
 
@@ -33,6 +33,7 @@ class Distance:
         self.GREEN = (0, 255, 0)
         self.RED = (0, 0, 255)
         self.WHITE = (255, 255, 255)
+        self.BLACK = (0,0,0)
         self.fonts = cv2.FONT_HERSHEY_COMPLEX
 
         # face detector object
@@ -71,7 +72,7 @@ class Distance:
             Distance = self.distance_finder(self.focal_length_found, self.KNOWN_WIDTH_FACE, face_width_in_frame)
             # Drwaing Text on the screen
             cv2.putText(
-                frame, f"Face Distance = {round(Distance,2)} CM", (30, 30), self.fonts, 0.6, (self.WHITE), 1
+                frame, f"Face Distance = {round(Distance,2)} CM", (30, 30), self.fonts, 0.6, (self.BLACK), 1
             )
         # cv2.imshow("frame", frame)    
         return Distance
@@ -89,11 +90,11 @@ class Distance:
     
             if not second_ball:
                 cv2.putText(
-                    frame, f"Ball1 Distance = {round(Distance,2)} CM", (30, 50), self.fonts, 0.6, (self.WHITE), 1
+                    frame, f"Ball1 Distance = {round(Distance,2)} CM", (30, 50), self.fonts, 0.6, (self.BLACK), 1
                 )
             else:
                 cv2.putText(
-                    frame, f"Ball2 Distance = {round(Distance,2)} CM", (30, 70), self.fonts, 0.6, (self.WHITE), 1
+                    frame, f"Ball2 Distance = {round(Distance,2)} CM", (30, 70), self.fonts, 0.6, (self.BLACK), 1
                 )
     
         return Distance

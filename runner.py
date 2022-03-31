@@ -182,14 +182,18 @@ class Runner:
         self.ball_closer_count = 0
 
     def blur_img(self, img, factor = 20):
-        kW = int(img.shape[1] / factor)
-        kH = int(img.shape[0] / factor)
+        # kW = int(img.shape[1] / factor)
+        # kH = int(img.shape[0] / factor)
     
-        #ensure the shape of the kernel is odd
-        if kW % 2 == 0: kW = kW - 1
-        if kH % 2 == 0: kH = kH - 1
+        # #ensure the shape of the kernel is odd
+        # if kW % 2 == 0: kW = kW - 1
+        # if kH % 2 == 0: kH = kH - 1
     
-        blurred_img = cv2.GaussianBlur(img, (kW, kH), 0)
+        # blurred_img = cv2.GaussianBlur(img, (kW, kH), 0)
+
+        blurred_img = np.zeros([img.shape[0],img.shape[1],3],dtype=np.uint8)
+        blurred_img.fill(255)
+
         return blurred_img
 
     def run_detection_calibration(self, img):
@@ -639,6 +643,7 @@ class Runner:
         print("Calculating...")
         print(self.training_session_time, past_training_time)
         if int(self.training_session_time) > int(past_training_time):
+            print("Training time improved")
             send_audio = True
             audios.append("you_have_trained_for")
             
@@ -650,6 +655,7 @@ class Runner:
 
         print(self.training_reps, past_training_reps)
         if self.training_reps > past_training_reps:
+            print("Training reps improved")
             send_audio = True
             audios.append("you_have_done")
 
@@ -661,6 +667,7 @@ class Runner:
 
         print(self.average_ball1_distance, past_average_ball1_distance)
         if self.average_ball1_distance < past_average_ball1_distance:
+            print("Training distance improved")
             send_audio = True
             audios.append("your_first_ball_is")
 

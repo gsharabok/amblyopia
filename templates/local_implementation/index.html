@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visual Training Local</title>
+    <title>Visual Training</title>
 
     <!-- Font Awesome icons (free version)-->
     <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js" crossorigin="anonymous"></script>
@@ -58,7 +58,8 @@
           <div class="collapse navbar-collapse" id="navbarResponsive">
               <ul class="navbar-nav ms-auto py-4 py-lg-0">
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="index">Home</a></li>
-                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="tutorial">Tutorial</a></li>
+                  <!-- <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="tutorial">Tutorial</a></li> -->
+                  <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="color_setup">Setup</a></li>
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="calibration">Calibration</a></li>
                   <li class="nav-item"><a class="nav-link px-lg-3 py-3 py-lg-4 text-black" href="training">Training</a></li>
               </ul>
@@ -67,14 +68,23 @@
     </nav>
 
     <div id="container">
-        <h2 class="section-heading">Welcome to Visual Training (Computer Version)</h2>
-        <img id="media" src="{{ url_for('static', filename='img/visual_training.png')}}" alt="Media" />
-        <p>
-          Begin by navigating to the <a href="tutorial">tutorial</a> page. <br />
-          Then go to the <a href="color_setup">color_setup</a> page. <br />
-          After that you can move on to the <a href="calibration">calibration</a> page. <br />
-          Finally, to train you can go to the <a href="training">training</a> page. <br />
-        </p>
+        <h2 class="section-heading">Welcome to Visual Training</h2>
+        <!-- <img id="media" src="{{ url_for('static', filename='img/visual_training.png')}}" alt="Media" /> -->
+        <div class="d-flex flex-column">
+            <iframe class="row m-2 align-self-center" src="//www.youtube.com/embed/4rDygaF3Dog"
+                frameborder="0" width="600" height="338">
+            </iframe>
+            <!-- <p>
+              Begin by navigating to the <a href="tutorial">tutorial</a> page. <br />
+              Then go to the <a href="color_setup">color_setup</a> page. <br />
+              After that you can move on to the <a href="calibration">calibration</a> page. <br />
+              Finally, to train you can go to the <a href="training">training</a> page. <br />
+            </p> -->
+            <a href="color_setup" class="button m-2 row btn btn-outline-primary">⚙️ Go to setup!</a>
+            <a href="calibration" class="button m-2 row btn btn-outline-secondary">👀 Setup already? Go to calibration!</a>
+            <a href="training" class="button m-2 row btn btn-outline-secondary">🏋️ All calibrated? Time to train!</a>
+        </div>
+        
     </div>
 
     <!-- <script src="client.js"></script> -->
