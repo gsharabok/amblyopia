@@ -91,14 +91,14 @@
     <div id="container">
         <h2 id="title" class="section-heading column">Training</h2>
         <div id="tutorial-container" class="d-flex flex-column"> <!--col-4 d-flex justify-content-center text-center-->
-            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/4rDygaF3Dog"
-                  frameborder="0" width="600" height="338">
+            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/3jgBSdGRFPY?enablejsapi=1" 
+                allowfullscreen="true" allowscriptaccess="always" frameborder="0" width="600" height="338">
             </iframe>
-            <a id="tutorial-btn" onclick="finishTutorial()" class="button row m-2 btn-default btn-block btn btn-outline-primary">I am ready!</a>
+            <a id="tutorial-btn" onclick="finishTutorial()" class="button row m-2 btn-default btn-block btn btn-success">I am ready!</a>
         </div>
-        <div id="training-container" class="" hidden>
-            <a id="button-start" onclick="startVideo()" class="button row btn btn-block btn-outline-primary">Start</a>
-            <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button row btn btn-outline-primary" hidden>Complete</a>
+        <div id="training-container" hidden>
+            <a id="button-start" onclick="startVideo()" class="button row btn btn-block btn-success">Start</a>
+            <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button row btn btn-success" hidden>Complete</a>
             <img src="" id="video-stream" class="row">
         </div>
 
@@ -121,8 +121,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
-    <script>
+    <script type="text/javascript" charset="utf-8">
         function finishTutorial() {
+            $('#tutorial-vid').each(function(){
+                this.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*')
+            });
+
             document.getElementById("tutorial-container").hidden = true
             document.getElementById("tutorial-vid").hidden = true
             document.getElementById("tutorial-btn").hidden = true
@@ -139,12 +143,14 @@
             document.getElementById("audio1").play();
         }
 
-        function makeInvisible(){
+        async function makeInvisible(){
             document.getElementById("button-stop").hidden = true;
             document.getElementById("video-stream").hidden = true;
             document.getElementById("video-stream").src = "";
 
             document.getElementById("well-done").hidden = false;
+            await new Promise(r => setTimeout(r, 3000));
+            window.location.href = "{{ url_for('index') }}";
         }
 
         $(document).ready(function(){

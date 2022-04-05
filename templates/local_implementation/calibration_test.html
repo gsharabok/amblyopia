@@ -75,20 +75,20 @@
         <h2 class="section-heading column">Calibration</h2>
         <!-- <input type=”button” value=”call_flask_funtion” id="imgClickAndChange" onclick="changeImage()"> -->
         <div id="tutorial-container" class="d-flex flex-column">
-            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/4rDygaF3Dog"
-                  frameborder="0" width="600" height="338">
+            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/Gt90SNv-_nk?enablejsapi=1"
+                allowfullscreen="true" allowscriptaccess="always" frameborder="0" width="600" height="338">
             </iframe>
-            <a id="tutorial-btn" onclick="finishTutorial()" class="button row m-2 btn btn-outline-primary">I am ready!</a>
+            <a id="tutorial-btn" onclick="finishTutorial()" class="button row m-2 btn btn-success">I am ready!</a>
         </div>
 
         <div id="calibration-container" hidden>
-            <a id="button-start" onclick="startVideo()" class="button row btn btn-outline-primary">Start</a>
-            <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button row btn btn-outline-primary" hidden>Complete</a>
+            <a id="button-start" onclick="startVideo()" class="button row btn btn-success">Start</a>
+            <a id="button-stop" onclick="makeInvisible()" href="{{ url_for('finish_recording') }}" class="button row btn btn-success" hidden>Complete</a>
             <img src="" id="video-stream" class="row">
         </div>
 
         <img id="well-done" class="align-self-center" src="static/img/well_done.gif" alt="" style="width:350px;height:100px;" hidden>
-        <a id="train-btn" href="training" class="button row m-2 btn btn-outline-primary align-self-center" hidden>Go to training!</a>
+        <a id="train-btn" href="training" class="button row m-2 btn btn-success align-self-center" hidden>Go to training!</a>
     </div>
 
     <iframe src="/music/silence.mp3" allow="autoplay" id="audio" style="display: none"></iframe>
@@ -115,6 +115,10 @@
         var r = "" // TODO: continually send things to flask, maybe just push to result every new word
 
         function finishTutorial() {
+            $('#tutorial-vid').each(function(){
+                this.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*')
+            });
+
             document.getElementById("tutorial-container").hidden = true
             document.getElementById("tutorial-vid").hidden = true
             document.getElementById("tutorial-btn").hidden = true
@@ -162,11 +166,11 @@
 						}
 					}
 					r = finalTranscripts + interimTranscripts;
-                    if (r.includes("yes")) {
+                    if (r.includes("yes") || r.includes("aga")) {
                         $.post( "/check_wiggle_result", {
                             result: true 
                         });
-                    } else if (r.includes("no")) {
+                    } else if (r.includes("no") || r.includes("not")) {
                         makeInvisible();
                     }
                     console.log(r);

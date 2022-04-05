@@ -103,6 +103,8 @@ class Runner:
         self.training_finished = False
         self.training_feedback_ready = False
 
+        self.Distance = None
+
 
     def init_writer(self, img):
         # Create video writer

@@ -26,7 +26,7 @@ def track_ball(frame, lower_color=(0,0,0), upper_color=(255,255,255)):
         ((x, y), radius) = ball
         ball_width = radius*2
 
-        if radius > 5:
+        if radius > 3:
             cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 1)
 
     return ball

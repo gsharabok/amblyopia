@@ -89,10 +89,10 @@
     <div id="container">
         <h2 class="section-heading">Color Setup</h2>
         <div id="video-container" class="d-flex flex-column">
-            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/4rDygaF3Dog"
-                    frameborder="0" width="600" height="338">
+            <iframe id="tutorial-vid" class="row m-2 align-self-center" src="//www.youtube.com/embed/zQcOuXbb2Zg?enablejsapi=1"
+                allowfullscreen="true" allowscriptaccess="always" frameborder="0" width="600" height="338">
             </iframe>
-            <a id="tutorial-btn" onclick="showButtons()" class="button row m-2 btn btn-outline-primary">I have watched the video</a>
+            <a id="tutorial-btn" onclick="showButtons()" class="button row m-2 btn btn-success">I have watched the video</a>
         </div>
 
         <div id="button-container" class="mt-5" hidden>
@@ -105,10 +105,10 @@
                 <!-- <a id="button-extract1_ex" href="#no" onclick="playAudioEx(this)" class="button column btn btn-outline-primary">Red Ball</a>
                 <a id="button-extract2_ex" href="#no" onclick="playAudioEx(this)" class="button column btn btn-outline-primary">Green Ball</a>  -->
 
-                <a id="button-extract1_ex" href="#no" onclick="playAudioEx(this)" class="button column btn btn-outline-primary">Take a photo and setup!</a>
+                <a id="button-extract1_ex" href="#no" onclick="playAudioEx(this)" class="button column btn btn-success">Take a photo and setup!</a>
             </div>
         </div>
-
+  
         <a id="calibration" href="calibration" class="button m-3 row btn btn-success" hidden>Let's do calibration!</a>
     </div>
 
@@ -123,6 +123,7 @@
     </audio>
 
     <!-- <script src="client.js"></script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <!-- Bootstrap core JS-->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Core theme JS-->
@@ -173,10 +174,17 @@
 
             if (playedEx1) {
                 document.getElementById("calibration").hidden = false
+                document.getElementById("button-extract1_ex").innerHTML = "Redo Setup"
+                document.getElementById("button-extract1_ex").classList.remove('btn-success');
+                document.getElementById("button-extract1_ex").classList.add('btn-outline-secondary');
             }
         }
 
         function showButtons() {
+            $('#tutorial-vid').each(function(){
+                this.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*')
+            });
+
             document.getElementById("video-container").hidden = true
             document.getElementById("tutorial-vid").hidden = true
             document.getElementById("tutorial-btn").hidden = true

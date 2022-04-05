@@ -5,7 +5,7 @@ from detection.face import get_largest_frame
 import models
 
 class Distance:
-    def __init__(self, lower_ball_color, higher_ball_color):
+    def __init__(self, lower_ball_color, higher_ball_color, ):
         # Small string 34 cm
         # Face width 14.3 cm
         # Ball width 1.6 cm
@@ -68,12 +68,14 @@ class Distance:
         face_width_in_frame = w
         # finding the distance by calling function Distance
         Distance = 0
+
         if face_width_in_frame != 0:
             Distance = self.distance_finder(self.focal_length_found, self.KNOWN_WIDTH_FACE, face_width_in_frame)
             # Drwaing Text on the screen
             cv2.putText(
                 frame, f"Face Distance = {round(Distance,2)} CM", (30, 30), self.fonts, 0.6, (self.BLACK), 1
             )
+
         # cv2.imshow("frame", frame)    
         return Distance
     

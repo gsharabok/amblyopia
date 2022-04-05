@@ -20,11 +20,13 @@ app.attributes('-topmost',True)
 app.tk.call("source", "static/theme/azure.tcl")
 app.tk.call("set_theme", "light")
 
-title = ttk.Label(app, text='Crop the ball', font='arial 30 bold', foreground='#000')
+title = ttk.Label(app, text='Circle the red and green balls', font='arial 25 bold', foreground='#000')
 title.pack()
 
 IMG_HEIGHT = 480
 IMG_WIDTH = 640
+
+face_not_found_tries = 0
 
 # Declaration of variables
 mask = np.ones((IMG_HEIGHT, IMG_WIDTH))
@@ -47,7 +49,7 @@ mixer.init()
 
 
 def show_mask():
-    global image_for_mask_multiplication
+    global image_for_mask_multiplication, mask
     global cropped_image, cropped_image_cv2
     mask_3_channels = np.ones((IMG_HEIGHT, IMG_WIDTH, 3)) 
     image_mattt = (mask * 255).astype(np.uint8)
@@ -73,9 +75,17 @@ def show_mask():
     process()
     # cropped_image.show()
 
+def erase():
+    global image_area, app, image, mask
+    mask = np.ones((IMG_HEIGHT, IMG_WIDTH))
+    image_area.delete(image)
+    image_area.create_image(0, 0, image=image, anchor='nw')
+
+show_area = ttk.Button(app, width=20, text='Erase', command=erase)
+show_area.pack(pady=(0,3))
 
 show_area = ttk.Button(app, width=20, text='Done', command=show_mask)
-show_area.pack(pady=(0,5))
+show_area.pack(pady=(0,7))
 
 lower = np.array([0, 0, 0])
 higher = np.array([255, 255, 255])
@@ -90,7 +100,7 @@ higher_red = np.array([255, 255, 255])
 
 def reset_color():    
     global app, title, mask, minute, second, image_area, minuteEntry, secondEntry
-    global show_area, lower, higher
+    global show_area, lower, higher, face_not_found_tries
 
     app = Tk()
     app.title('Crop')
@@ -118,18 +128,24 @@ def reset_color():
 
     mixer.init()
 
+    show_area = ttk.Button(app, width=20, text='Erase', command=erase)
+    show_area.pack(pady=(0,3))
+
     show_area = ttk.Button(app, width=20, text='Done', command=show_mask)
     show_area.pack(pady=(0,5))
 
     lower = np.array([0, 0, 0])
     higher = np.array([255, 255, 255])
 
+    face_not_found_tries = 0
+
 def run_color():
+    app.eval('tk::PlaceWindow . center')
     submit()
     app.mainloop()
 
     # app.destroy()
-    print("Done!")
+    print("Finished Color Setup!")
     # global lower, higher
     global lower_green, higher_green, lower_red, higher_red
 
@@ -150,39 +166,76 @@ def blur_img( img, factor = 20):
 def takePhoto():
     global image, image_for_mask_multiplication, original_image
     global image_area, app
+    global minuteEntry, secondEntry, face_not_found_tries
 
     vidcap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    _,image = vidcap.read()
     _,image = vidcap.read()
     blurred_img = blur_img(image, factor = 2)
     faces = models.face_cascade.detectMultiScale(image, 1.1, 4)
     faces = get_largest_frame(faces)
-    blur_margin = 0
-    for (x, y, w, h) in faces:
-        detected_face = image[int(y)-blur_margin:, int(x)-blur_margin:int(x+w)+blur_margin]
-        blurred_img[y-blur_margin:, x-blur_margin:x+w+blur_margin] = detected_face
-        image = blurred_img
 
-        original_image = detected_face
+    if len(faces) == 0:
+        # No face found
+        face_not_found_tries += 1
+        if face_not_found_tries > 3:
+            mixer.music.load("static/audio/still_no_face_found.wav")
+            mixer.music.play()
+            time.sleep()
+            app.destroy()
+          
+        b,g,r = cv2.split(image)
+        image = cv2.merge((r,g,b))
+        image = Image.fromarray(image)
+        image_for_mask_multiplication = image
+        image = ImageTk.PhotoImage(image)
+        image_area.create_image(0, 0, image=image, anchor='nw')
 
-    if models.is_frozen:
-        cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
+        app.update()
+        mixer.music.load("static/audio/no_face_found.wav")
+        mixer.music.play()
+
+        time.sleep(1)
+        time.sleep(7)
+
+        image_area.delete(image)
+        minuteEntry= Entry(app, width=3, font=("Arial",18,""),
+                    textvariable=minute)
+        minuteEntry.place(x=210,y=280)
+        secondEntry= Entry(app, width=3, font=("Arial",18,""),
+                    textvariable=second)
+        secondEntry.place(x=260,y=280)
+        second.set("03")
+        submit()
     else:
-        cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
-    
-    b,g,r = cv2.split(image)
-    image = cv2.merge((r,g,b))
-    image = Image.fromarray(image)
-    image_for_mask_multiplication = image
-    image = ImageTk.PhotoImage(image)
-    image_area.create_image(0, 0, image=image, anchor='nw')
-    select_area()
+        blur_margin = 0
+        for (x, y, w, h) in faces:
+            detected_face = image[int(y)-blur_margin:, int(x)-blur_margin:int(x+w)+blur_margin]
+            blurred_img[y-blur_margin:, x-blur_margin:x+w+blur_margin] = detected_face
+            image = blurred_img
+
+            original_image = detected_face
+
+        if models.is_frozen:
+            cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
+        else:
+            cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
+
+        b,g,r = cv2.split(image)
+        image = cv2.merge((r,g,b))
+        image = Image.fromarray(image)
+        image_for_mask_multiplication = image
+        image = ImageTk.PhotoImage(image)
+        image_area.create_image(0, 0, image=image, anchor='nw')
+        select_area()
     
 def get_x_and_y(event):
     global lasx, lasy
     lasx, lasy = event.x, event.y
 
-def draw_smth( event):
+def draw_smth(event):
     global lasx, lasy
+    global mask
     image_area.create_line((lasx, lasy, event.x, event.y), fill='red', width=3)
     lasx, lasy = event.x, event.y
     
@@ -226,8 +279,12 @@ def remove_white(img):
     
     ## (3) Find the max-area contour
     cnts = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-    # print(cnts)
+    
+    if len(cnts) < 2:
+        return [None, None, "not_enough_circles"]
+
     cnt = sorted(cnts, key=cv2.contourArea) #[-1]
+
     green_cnt = cnt[-1]
     red_cnt = cnt[-2]
     
@@ -237,7 +294,8 @@ def remove_white(img):
 
     x,y,w,h = cv2.boundingRect(red_cnt)
     dst_red = img[y:y+h, x:x+w]
-    return [dst_green, dst_red]
+
+    return [dst_green, dst_red, None]
 
 def find_range(cropped_image_cv2):
     hsv = cv2.cvtColor(cropped_image_cv2, cv2.COLOR_BGR2HSV)
@@ -273,10 +331,18 @@ def process():
     cv2.imwrite("0.jpg",cropped_image_cv2)
 
     # cropped_image_cv2 = remove_white(cropped_image_cv2)
-    green, red = remove_white(cropped_image_cv2)
+    green, red, err = remove_white(cropped_image_cv2)
 
-    lower_green, higher_green = find_range(green)
-    lower_red, higher_red = find_range(red)
+    if err != None:
+        if err == "not_enough_circles":
+            mixer.music.load("static/audio/not_enough_circles.wav")
+            mixer.music.play()
+
+    else:
+        lower_green, higher_green = find_range(green)
+        lower_red, higher_red = find_range(red)
+
+        app.destroy()
 
     # original_image_hsv = hsv = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
 
@@ -285,8 +351,6 @@ def process():
     # mask = cv2.dilate(mask, None, iterations=2)
 
     # cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','11.jpg'), mask)
-
-    app.destroy()
     # return [lower, higher]
 
 
@@ -307,6 +371,8 @@ def submit():
             minuteEntry.destroy()
             secondEntry.destroy()
             takePhoto()
+            mixer.music.load("static/audio/circle_the_balls.wav")
+            mixer.music.play()
             # messagebox.showinfo("Time Countdown", "Time's up ")
         temp -= 1
 

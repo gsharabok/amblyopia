@@ -32,8 +32,10 @@ runner_calibration = Runner()
 runner_training = Runner()
 runner_training.is_training = True
 
-is_writer_init = False
-continue_running = True
+is_writer_init_calibration = False
+is_writer_init_training = False
+continue_running_calibration = True
+continue_running_training = True
 # server_training_count = 0
 # server_calibration_count = 0
 
@@ -100,24 +102,24 @@ def training():
 def gen_calibration(camera):
     """Video streaming generator function."""
     
-    global is_writer_init, runner_calibration, continue_running
+    global is_writer_init_calibration, runner_calibration, continue_running_calibration
     global to_send
 
     # runner_calibration.ball1_lower = (107, 43, 135)
     # runner_calibration.ball1_upper = (216, 215, 255)
 
     yield b'--frame\r\n'
-    while continue_running:
+    while continue_running_calibration:
         frame = camera.get_frame()
 
         nparr = np.frombuffer(frame, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        if not is_writer_init:
-            is_writer_init = True
+        if not is_writer_init_calibration:
+            is_writer_init_calibration = True
             runner_calibration.init_writer(frame)
 
-        print(runner_calibration.ball1_lower, runner_calibration.ball1_upper)
+        # print(runner_calibration.ball1_lower, runner_calibration.ball1_upper)
 
         frame = runner_calibration.run_detection_calibration(frame)
         # emit('update value', "hello", broadcast=True)
@@ -146,7 +148,8 @@ def gen_calibration(camera):
 
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
-    continue_running = True
+    continue_running_calibration = True
+    is_writer_init_calibration = False
     runner_calibration.finish()
 
 
@@ -173,7 +176,7 @@ def switch_eye():
 def gen_training(camera):
     """Video streaming generator function."""
     
-    global is_writer_init, runner_training, continue_running
+    global is_writer_init_training, runner_training, continue_running_training
     global send_eye_switch, second_eye, diverse_ball_sound
     global to_send
     # runner_training.ball1_lower = (164, 48, 83)
@@ -182,14 +185,14 @@ def gen_training(camera):
     # runner_training.ball2_upper = (81, 77, 255)
 
     yield b'--frame\r\n'
-    while continue_running:
+    while continue_running_training:
         frame = camera.get_frame()
 
         nparr = np.frombuffer(frame, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        if not is_writer_init:
-            is_writer_init = True
+        if not is_writer_init_training:
+            is_writer_init_training = True
             runner_training.init_writer(frame)
 
         frame = runner_training.run_detection_training(frame)
@@ -231,8 +234,8 @@ def gen_training(camera):
                 second_eye = True
 
         if runner_training.training_finished:
-            print("Training Finished")
-            continue_running = False
+            print("Training Finished!")
+            continue_running_training = False
             # socketio.emit('play', 'session_complete.mp3')
             to_send = 'session_complete.mp3'
 
@@ -240,8 +243,9 @@ def gen_training(camera):
 
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
-    continue_running = True
+    continue_running_training = True
     runner_training.finish()
+    is_writer_init_training = False
 
     while not runner_training.training_feedback_ready:
         eventlet.sleep(1)
@@ -255,31 +259,38 @@ def gen_training(camera):
 @app.route('/video_feed_calibration')
 def video_feed_calibration():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen_calibration(Camera()),
+    cam = Camera()
+    return Response(gen_calibration(cam),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/video_feed_training')
 def video_feed_training():
     """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen_training(Camera()),
+    cam = Camera()
+    return Response(gen_training(cam),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/finish_recording')
 def finish_recording():
-    global continue_running, runner_training
-    continue_running = False
+    print("[func finish_recording]")
+    # global continue_running, runner_training
+    # continue_running = False
 
     if not runner_training.training_finished and runner_training.training_start_time != None:
         runner_training.training_session_time = time.time() - runner_training.training_start_time
     
+    print("[end]\n")
     return '', 204
 
 @app.route('/prepare_color_data', methods=['POST'])
 def prepare_color_data():
-    global runner_calibration, experimental_color
+    print("[func prepare_color_data]")
+
+    global runner_calibration, runner_training, experimental_color
     print("Preparing color. Experimental: ", experimental_color)
 
     if not experimental_color:
+        print("[end]\n")
         return '', 204        
 
     filename = os.path.join(models.EXE_LOCATION,'data','results','color','red.txt')
@@ -298,6 +309,8 @@ def prepare_color_data():
         runner_training.ball1_lower = low
         runner_training.ball1_upper = up
 
+        print("Set Red: ", low, up)
+
     filename = os.path.join(models.EXE_LOCATION,'data','results','color','green.txt')
     if os.path.exists(filename):
         f = open(filename, "r")
@@ -312,6 +325,9 @@ def prepare_color_data():
         runner_training.ball2_lower = low
         runner_training.ball2_upper = up
 
+        print("Set Green: ", low, up)
+
+    print("[end]\n")
     return '', 204
 
 
@@ -418,15 +434,15 @@ def extract_color2_ex():
 @app.route('/check_wiggle_result', methods=['POST'])
 def check_wiggle_result():
     global runner_calibration
+    global to_send
 
     jsdata = request.form['result']
 
     if jsdata == 'true':
         runner_calibration.user_wiggling = True
+        to_send = 'stop_the_ball.mp3'
 
     # socketio.emit('play', 'stop_the_ball.mp3')
-    global to_send
-    to_send = 'stop_the_ball.mp3'
     return '', 204
 
 
@@ -434,7 +450,7 @@ def background_thread():
     """Example of how to send server generated events to clients."""
     # count = 0
     while True:
-        socketio.sleep(0.5)
+        socketio.sleep(0.4)
         # count += 1
         global to_send
         if to_send is not None:
