@@ -106,7 +106,7 @@ def reset_color():
     app.title('Crop')
     app.geometry('500x700')
     app.attributes('-topmost',True)
-    title = Label(app, text='Crop the ball', font='arial 30 bold', fg='#068481')
+    title = ttk.Label(app, text='Circle the red and green balls', font='arial 25 bold', foreground='#000')
     title.pack()
 
     # Declaration of variables
@@ -119,11 +119,11 @@ def reset_color():
     image_area = Canvas(app, width=IMG_WIDTH, height=IMG_HEIGHT, bg='#C8C8C8')
     image_area.pack(pady=(10,0))
 
-    minuteEntry= Entry(app, width=3, font=("Arial",18,""),
-                    textvariable=minute)
+    minuteEntry= ttk.Entry(app, width=3, font=("Arial",18,""),
+                textvariable=minute)
     minuteEntry.place(x=210,y=280)
-    secondEntry= Entry(app, width=3, font=("Arial",18,""),
-                    textvariable=second)
+    secondEntry= ttk.Entry(app, width=3, font=("Arial",18,""),
+                textvariable=second)
     secondEntry.place(x=260,y=280)
 
     mixer.init()
@@ -216,9 +216,16 @@ def takePhoto():
 
             original_image = detected_face
 
+        print("--Saving reference color--")
+        path = 'data'
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         if models.is_frozen:
+            # cv2.imwrite('data/reference_color.jpg', image)
             cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
         else:
+            # cv2.imwrite('data/reference_color.jpg', image)
             cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','reference_color.jpg'), image)
 
         b,g,r = cv2.split(image)
@@ -308,6 +315,10 @@ def find_range(cropped_image_cv2):
     for y in range(0, height):
         for x in range(0, width):
             pixel = hsv[y,x]
+
+            if pixel[2] > 240: # remove white in hsv
+                continue
+
             if (not np.array_equal(pixel, np.array([255,255,255]))
                 and not np.array_equal(pixel, np.array([0,0,0]))):
                 lower[0] = min(pixel[0], lower[0]) if pixel[0] != 0 else lower[0]
@@ -327,8 +338,6 @@ def process():
     global cropped_image, cropped_image_cv2, original_image
     # global lower, higher
     global lower_green, higher_green, lower_red, higher_red
-    
-    cv2.imwrite("0.jpg",cropped_image_cv2)
 
     # cropped_image_cv2 = remove_white(cropped_image_cv2)
     green, red, err = remove_white(cropped_image_cv2)
@@ -342,16 +351,12 @@ def process():
         lower_green, higher_green = find_range(green)
         lower_red, higher_red = find_range(red)
 
+        mask = cv2.inRange(cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV), lower_green, higher_green)
+        # cv2.imwrite("data/mask_g.jpg",mask)
+        mask = cv2.inRange(cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV), lower_red, higher_red)
+        # cv2.imwrite("data/mask_r.jpg",mask)
+
         app.destroy()
-
-    # original_image_hsv = hsv = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
-
-    # mask = cv2.inRange(original_image_hsv, lower, higher)
-    # mask = cv2.erode(mask, None, iterations=2)
-    # mask = cv2.dilate(mask, None, iterations=2)
-
-    # cv2.imwrite(os.path.join(models.EXE_LOCATION,'data','11.jpg'), mask)
-    # return [lower, higher]
 
 
 def submit():

@@ -2,10 +2,6 @@ from importlib import import_module
 import os
 import sys
 
-# from gevent import monkey
-# monkey.patch_all()
-
-
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 import numpy as np
@@ -20,10 +16,8 @@ from threading import Lock
 import eventlet
 from engineio.async_drivers import eventlet as evt
 eventlet.monkey_patch()
-# async_mode = "eventlet"
 
 from ball.color_picker_func import extract_color, reset_colors
-# from ball.color_setup_new import ColorSetup
 from ball.color_setup_new_func import run_color, reset_color
 import models
 
@@ -36,8 +30,6 @@ is_writer_init_calibration = False
 is_writer_init_training = False
 continue_running_calibration = True
 continue_running_training = True
-# server_training_count = 0
-# server_calibration_count = 0
 
 second_eye = True
 send_eye_switch = False
@@ -45,7 +37,6 @@ diverse_ball_sound = False
 
 to_send = None
 experimental_color = True
-# loop = sched.scheduler(time.time, time.sleep)
 
 # import camera driver
 if os.environ.get('CAMERA'):
@@ -58,9 +49,8 @@ if getattr(sys, 'frozen', False):
     app = Flask(__name__, template_folder=template_folder)
 else:
     app = Flask(__name__)
-# app = Flask(__name__)
 
-socketio = SocketIO(app) # , async_mode=async_mode
+socketio = SocketIO(app)
 
 
 communication_thread = None
@@ -105,9 +95,6 @@ def gen_calibration(camera):
     global is_writer_init_calibration, runner_calibration, continue_running_calibration
     global to_send
 
-    # runner_calibration.ball1_lower = (107, 43, 135)
-    # runner_calibration.ball1_upper = (216, 215, 255)
-
     yield b'--frame\r\n'
     while continue_running_calibration:
         frame = camera.get_frame()
@@ -119,30 +106,28 @@ def gen_calibration(camera):
             is_writer_init_calibration = True
             runner_calibration.init_writer(frame)
 
-        # print(runner_calibration.ball1_lower, runner_calibration.ball1_upper)
-
         frame = runner_calibration.run_detection_calibration(frame)
-        # emit('update value', "hello", broadcast=True)
 
         if runner_calibration.user_positioned and not runner_calibration.user_positioned_audio:
             print("Sent User Positioned Audio")
             runner_calibration.user_positioned_audio = True
             to_send = 'correct_position.mp3'
-            # socketio.send('play', 'correct_position.mp3') #, namespace="/audio"
-            # emit('play', 'correct_position.mp3')
-            # emit('play', 'correct_position.mp3',broadcast=True)
 
         if runner_calibration.user_wiggling and not runner_calibration.user_wiggling_audio:
                 print("Sent User Wiggling Audio")
                 runner_calibration.user_wiggling_audio = True
-                # socketio.emit('play', 'stop_the_ball.mp3')
+                runner_calibration.user_wiggling = False
                 to_send = 'stop_the_ball.mp3'
+                continue_running_calibration = False
 
         if runner_calibration.user_wiggling2 and not runner_calibration.user_wiggling2_audio:
                 print("Check if user wiggled")
                 runner_calibration.user_wiggling2_audio = True
-                # socketio.emit('play', 'check_wiggle.mp3')
+                runner_calibration.user_wiggling2 = False
                 to_send = 'check_wiggle.mp3'
+
+                th = threading.Thread(target=reset_audio_bool)
+                th.start()
 
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
 
@@ -152,15 +137,17 @@ def gen_calibration(camera):
     is_writer_init_calibration = False
     runner_calibration.finish()
 
+def reset_audio_bool():
+    global runner_calibration
+    eventlet.sleep(3)
+    runner_calibration.user_wiggling2_audio = False
 
 def switch_eye():
     global second_eye, send_eye_switch, runner_training, diverse_ball_sound
     starttime = time.time()
 
     i = 0
-    while i<6:
-        # print("tick")
-        # eventlet.sleep(5)
+    while i<8:
         eventlet.sleep(6.0 - ((time.time() - starttime) % 6.0))
 
         if i != 0 and i % 5 == 0:
@@ -179,10 +166,6 @@ def gen_training(camera):
     global is_writer_init_training, runner_training, continue_running_training
     global send_eye_switch, second_eye, diverse_ball_sound
     global to_send
-    # runner_training.ball1_lower = (164, 48, 83)
-    # runner_training.ball1_upper = (182, 214, 255)
-    # runner_training.ball2_lower = (40, 10, 207)
-    # runner_training.ball2_upper = (81, 77, 255)
 
     yield b'--frame\r\n'
     while continue_running_training:
@@ -199,7 +182,6 @@ def gen_training(camera):
 
         if runner_training.user_positioned and not runner_training.user_positioned_audio:
             print("Sent User Second Ball Audio")
-            # socketio.emit('play', 'second_ball0.mp3')
             to_send = 'second_ball0.mp3'
             second_eye = False
 
@@ -208,35 +190,28 @@ def gen_training(camera):
 
             th = threading.Thread(target=switch_eye)
             th.start()
-            # loop.enter(60, 1, switch_eye, (loop,))
-            # loop.run()
 
         if send_eye_switch:
             print("Sent Eye Switch Audio")
             send_eye_switch = False
             if second_eye:
                 if diverse_ball_sound:
-                    # socketio.emit('play', 'second_ball2.mp3')
                     to_send = 'second_ball2.mp3'
                     diverse_ball_sound = False
                 else:
-                    # socketio.emit('play', 'second_ball1.mp3')
                     to_send = 'second_ball1.mp3'
                 second_eye = False
             else:
                 if diverse_ball_sound:
-                    # socketio.emit('play', 'first_ball2.mp3')
                     to_send = 'first_ball2.mp3'
                     diverse_ball_sound = False
                 else:
-                    # socketio.emit('play', 'first_ball1.mp3')
                     to_send = 'first_ball1.mp3'
                 second_eye = True
 
         if runner_training.training_finished:
             print("Training Finished!")
             continue_running_training = False
-            # socketio.emit('play', 'session_complete.mp3')
             to_send = 'session_complete.mp3'
 
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
@@ -244,14 +219,28 @@ def gen_training(camera):
         yield b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n--frame\r\n'
 
     continue_running_training = True
-    runner_training.finish()
+    sent_audio = runner_training.finish()
+    
     is_writer_init_training = False
 
-    while not runner_training.training_feedback_ready:
-        eventlet.sleep(1)
-    print("Sent")
-    # socketio.emit('play', 'combined/combined.mp3')
-    to_send = 'combined/combined.mp3'
+    if sent_audio:
+        while not runner_training.training_feedback_ready:
+            print("Feedback ready: ", runner_training.training_feedback_ready)
+            eventlet.sleep(0.5)
+        print("Sent training feedback")
+
+        if models.is_frozen:
+            to_send = 'combined/combined.wav'
+        else:
+            to_send = 'combined/combined.mp3'
+
+    b1l, b1u = runner_training.ball1_lower, runner_training.ball1_upper
+    b2l, b2u = runner_training.ball2_lower, runner_training.ball2_upper
+    runner_training = Runner()
+    runner_training.is_training = True
+    runner_training.ball1_lower,runner_training.ball1_upper = b1l, b1u
+    runner_training.ball2_lower,runner_training.ball2_upper = b2l, b2u
+    print("Reset the colors for training")
 
     th.join()
 
@@ -273,8 +262,6 @@ def video_feed_training():
 @app.route('/finish_recording')
 def finish_recording():
     print("[func finish_recording]")
-    # global continue_running, runner_training
-    # continue_running = False
 
     if not runner_training.training_finished and runner_training.training_start_time != None:
         runner_training.training_session_time = time.time() - runner_training.training_start_time
@@ -335,24 +322,6 @@ def prepare_color_data():
 def download_file(filename):
     return send_from_directory('static/audio/', filename)
 
-# def func():
-#     lower, upper, done = run_color()
-#     return [lower,upper]
-
-# def callback(gt, *args, **kwargs): 
-#     """ this function is called when results are available """ 
-#     result = gt.wait() 
-#     print("[cb] %s" % result)
-
-#     lower, upper = result
-
-#     global runner_calibration, runner_training
-#     runner_calibration.ball1_lower = lower
-#     runner_calibration.ball1_upper = upper
-
-#     runner_training.ball1_lower = lower
-#     runner_training.ball1_upper = upper
-
 @app.route('/extract_color1')
 def extract_color1():
     global experimental_color
@@ -373,37 +342,10 @@ def extract_color1():
 
 @app.route('/extract_color1_ex')
 def extract_color1_ex():
-    # global runner_calibration, runner_training
-    # lower, upper = extract_color()
-
-    # greenth = eventlet.spawn(func) 
-    # greenth.link(callback)
-
-    # lower, upper, done = run_color()
-
-    # print(lower, upper)
-    # global lower_range, higher_range
-    # lower_range = lower
-    # higher_range = upper
-
-
-    # exec(open('ball/countdown.py').read())
-
     global extract_color1_thread
     with extract_color1_thread_lock:
         if extract_color1_thread is None:
-            # thread = socketio.start_background_task(background_thread)
             extract_color1_thread = socketio.start_background_task(back_temp1)
-    # # lower, upper = color_setup.run()
-
-    # runner_calibration.ball1_lower = lower
-    # runner_calibration.ball1_upper = upper
-
-    # runner_training.ball1_lower = lower
-    # runner_training.ball1_upper = upper
-
-    # reset_color()
-    # reset_colors()
 
     return '', 204
 
@@ -442,31 +384,20 @@ def check_wiggle_result():
         runner_calibration.user_wiggling = True
         to_send = 'stop_the_ball.mp3'
 
-    # socketio.emit('play', 'stop_the_ball.mp3')
     return '', 204
 
 
 def background_thread():
     """Example of how to send server generated events to clients."""
-    # count = 0
     while True:
         socketio.sleep(0.4)
-        # count += 1
         global to_send
         if to_send is not None:
             socketio.emit('my_response', to_send)
             to_send = None
-        # else:
-        #     socketio.emit('my_response',
-        #               {'data': 'Server generated event', 'count': count})
-
 
 def back_temp1():
     """Background thread for extracting first color"""
-    # count = 0
-    # while True:
-        # socketio.sleep(0.5) 
-    # lower, upper = run_color()
     lower_green, higher_green, lower_red, higher_red = run_color()
 
     path = 'data/results/color'
@@ -491,22 +422,9 @@ def back_temp1():
 
     global extract_color1_thread
     extract_color1_thread = None
-        # np.savetxt(filename, np.array([lower, upper]), delimiter =", ")
-        # for num in lower:
-        #     f.write("%s\n" % num)
-
-        # global runner_calibration, runner_training
-        # runner_calibration.ball1_lower = lower
-        # runner_calibration.ball1_upper = upper
-
-        # runner_training.ball1_lower = lower
-        # runner_training.ball1_upper = upper
 
 def back_temp2():
     """Background thread for extracting second color"""
-    # count = 0
-    # while True:
-        # socketio.sleep(0.5) 
     lower, upper = run_color()
     path = 'data/results/color'
     if not os.path.exists(path):
@@ -520,33 +438,6 @@ def back_temp2():
 
     reset_color()
 
-
-# def run_color_setup1():
-#     color_setup = ColorSetup()
-
-#     lower, upper = color_setup.run()
-
-#     print(lower, upper)
-
-#     global runner_calibration, runner_training
-
-#     runner_calibration.ball1_lower = lower
-#     runner_calibration.ball1_upper = upper
-
-#     runner_training.ball1_lower = lower
-#     runner_training.ball1_upper = upper
-
-# def run_color_setup2():
-#     color_setup = ColorSetup()
-
-#     lower, upper = color_setup.run()
-
-#     # global runner_training
-
-#     # runner_training.ball2_lower = lower
-#     # runner_training.ball2_upper = upper
-
-
 @socketio.event
 def connect():
     print("Connected")
@@ -554,7 +445,6 @@ def connect():
     with communication_thread_lock:
         if communication_thread is None:
             communication_thread = socketio.start_background_task(background_thread)
-    # emit('my_response', {'data': 'Connected', 'count': 0})
 
 @socketio.on('disconnect')
 def test_disconnect():
@@ -566,5 +456,3 @@ def open_browser():
 if __name__.endswith('__main__'):
     threading.Timer(1, open_browser).start()
     socketio.run(app, host='0.0.0.0')
-
-    # app.run(host='0.0.0.0', threaded=True)

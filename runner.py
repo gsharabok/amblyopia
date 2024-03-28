@@ -9,9 +9,17 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from datetime import datetime
-# from moviepy.editor import concatenate_audioclips, AudioFileClip
-from moviepy.audio.io import AudioFileClip
-from moviepy.audio.AudioClip import concatenate_audioclips
+
+import models
+if models.is_frozen:
+    from moviepy.audio.io import AudioFileClip
+    from moviepy.audio.AudioClip import concatenate_audioclips
+    from moviepy.audio.AudioClip import AudioClip
+    from moviepy.audio.io.readers import FFMPEG_AudioReader
+else: 
+    from moviepy.editor import concatenate_audioclips, AudioFileClip
+
+
 
 from detection.mask import create_mask
 from detection.face import detect_face, get_largest_frame
@@ -23,7 +31,6 @@ from eye_corners import get_eye_corners
 # from distance_measure.distance import get_distance_face, get_distance_ball
 from distance_measure.distance_class import Distance
 # from local_client import send_feedback_audio
-import models
 
 class Runner:
     def __init__(self): 
@@ -572,13 +579,34 @@ class Runner:
 
         if session_count > 0:
             self.send_training_feedback(session_count+1)
+            return True
+        else:
+            return False
 
     def concatenate_audio_moviepy(self, audio_clip_paths, output_path = "static/audio/combined/combined.mp3"):
         """Concatenates several audio files into one audio file using MoviePy
         and save it to `output_path`. Note that extension (mp3, etc.) must be added to `output_path`"""
-        clips = [AudioFileClip("static/audio/base_files/" + c + ".mp3") for c in audio_clip_paths]
-        final_clip = concatenate_audioclips(clips)
-        final_clip.write_audiofile(output_path)
+        
+        print("Concatinating audios. Frozen: ", models.is_frozen)
+        print(audio_clip_paths)
+        if models.is_frozen:
+            clips = [AudioFileClip(os.path.join(models.EXE_LOCATION,"static","audio","base_files", c + ".wav")) for c in audio_clip_paths]
+            print(clips)
+            final_clip = concatenate_audioclips(clips)
+        
+            path = os.path.join(models.EXE_LOCATION,"static","audio","combined")
+            if not os.path.exists(path):
+                os.makedirs(path)
+            output_path = "static/audio/combined/combined.wav"
+            final_clip.write_audiofile(output_path)
+        else:
+            clips = [AudioFileClip("static/audio/base_files/" + c + ".mp3") for c in audio_clip_paths]
+            print(clips)
+            final_clip = concatenate_audioclips(clips)
+            final_clip.write_audiofile(output_path)
+
+        print("Done concatinating")
+        
 
     def get_pos_nums(self, num):
         pos_nums = []
@@ -592,16 +620,16 @@ class Runner:
     def get_times(self, time):
         print(time)
         times = []
-        if time > 100 and time < 1000:
+        if time >= 100 and time < 1000:
             nums = self.get_pos_nums(time)
             times.append(str(nums[0] * 100))
             times.append(str(nums[1] * 10))
             times.append(str(nums[2]))
-        elif time > 10 and time < 100:
+        elif time > 20 and time < 100:
             nums = self.get_pos_nums(time)
             times.append(str(nums[0] * 10))
             times.append(str(nums[1]))
-        elif time < 10:
+        elif time <= 20:
             times.append(str(time))
 
         return times
@@ -609,7 +637,7 @@ class Runner:
     def send_training_feedback(self, current_session):
         audios = ["from_your_last_session"]
         send_audio = False
-
+        
         if models.is_frozen:
             filename = os.path.join(models.EXE_LOCATION,'data','results','log',datetime.today().strftime('%Y-%m-%d') + '.txt')
         else:
@@ -644,16 +672,16 @@ class Runner:
 
         print("Calculating...")
         print(self.training_session_time, past_training_time)
-        if int(self.training_session_time) > int(past_training_time):
+        if int(self.training_session_time) < int(past_training_time):
             print("Training time improved")
             send_audio = True
             audios.append("you_have_trained_for")
             
-            time = int(self.training_session_time - past_training_time)
+            time = int(past_training_time - self.training_session_time)
             times = self.get_times(time)
 
             audios.extend(times)
-            audios.append("seconds_longer")
+            audios.append("seconds_less")
 
         print(self.training_reps, past_training_reps)
         if self.training_reps > past_training_reps:
@@ -679,6 +707,7 @@ class Runner:
             audios.extend(times)
             audios.append("cm_closer")
 
+        print("Send audio: ", send_audio)
         if send_audio:
             audios.append("keep_it_up")
 
@@ -689,6 +718,10 @@ class Runner:
 
 
     def plot_data(self):
+        path = 'data/results/plots'
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         indx = [x for x in range(0, len(self.ball_to_face_distance_array))]
         plt.scatter(indx, self.ball_to_face_distance_array, color='red', label='Ball Distance')
         if models.is_frozen:
@@ -715,10 +748,14 @@ class Runner:
         plt.close()
 
     def finish(self):
-        print("Finishing")
+        print("Starting Finish procedure")
         self.capWriter.release()
         cv2.destroyAllWindows()
 
+        sent_audio = False
         if self.is_training:
-            self.write_training_log()
+            sent_audio = self.write_training_log()
         self.plot_data()
+        print("Completed Finish procedure")
+
+        return sent_audio

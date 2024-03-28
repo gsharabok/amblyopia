@@ -1,6 +1,3 @@
-# Landmark 39: left eye corner; 42: right eye corner
-# 0 indexed
-
 # import the necessary packages
 from imutils import face_utils
 import dlib
@@ -14,8 +11,10 @@ else:
 	EXE_LOCATION = os.path.dirname( os.path.realpath( __file__ ) ) # Other packers
 	
 detector = dlib.get_frontal_face_detector()
-# predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 predictor = dlib.shape_predictor(os.path.join( EXE_LOCATION, 'shape_predictor_68_face_landmarks.dat'))
+
+# Landmark 39: left eye corner; 42: right eye corner
+# 0 indexed
 
 # Args: full gray image, face bounding box
 # Returns: left eye corner, right eye corner
@@ -26,11 +25,6 @@ def get_eye_corners(image, gray, face):
 	# convert the facial landmark (x, y)-coordinates to a NumPy array
 	shape = predictor(gray, rect)
 	shape = face_utils.shape_to_np(shape)
-
-	# (x, y, w, h) = face
-
-	# for (x, y) in shape:
-	# 	cv2.circle(image, (x, y), 1, (0, 0, 255), -1)
 
 	# left
 	x_left, y_left = shape[39]
